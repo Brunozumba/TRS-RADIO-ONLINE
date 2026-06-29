@@ -1,0 +1,6 @@
+{
+  "name": "TRS Rádio Online",
+  "description": "A Rádio Online de Angola para o mundo - A Música Sem Fronteiras. Transmissão ao vivo, programação completa, contactos e informações de publicidade.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
