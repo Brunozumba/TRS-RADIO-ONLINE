@@ -10,9 +10,10 @@ interface AdminAdManagerProps {
   employeeEmail: string;
   hasPermission: (module: string, action: 'view' | 'manage') => boolean;
   onRefresh: () => void;
+  showToast?: (message: string, type?: 'success' | 'error' | 'info') => void;
 }
 
-export default function AdminAdManager({ db, employeeEmail, hasPermission, onRefresh }: AdminAdManagerProps) {
+export default function AdminAdManager({ db, employeeEmail, hasPermission, onRefresh, showToast }: AdminAdManagerProps) {
   const [activeSubTab, setActiveSubTab] = useState<'campaigns' | 'sponsors'>('campaigns');
   const [campaignSearch, setCampaignSearch] = useState('');
   const [sponsorSearch, setSponsorSearch] = useState('');
@@ -31,7 +32,8 @@ export default function AdminAdManager({ db, employeeEmail, hasPermission, onRef
     position: 'Banner Home' as AdCampaign['position'],
     status: 'Ativo' as AdCampaign['status'],
     audioUrl: '',
-    image: ''
+    image: '',
+    classification: 'Anúncio' as 'Anúncio' | 'Publicidade' | 'Patrocinador'
   });
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, callback: (base64: string) => void) => {
@@ -55,7 +57,8 @@ export default function AdminAdManager({ db, employeeEmail, hasPermission, onRef
     status: 'Ativo' as Sponsor['status'],
     contactPerson: '',
     contactEmail: '',
-    contributionLevel: 'Gold' as Sponsor['contributionLevel']
+    contributionLevel: 'Gold' as Sponsor['contributionLevel'],
+    classification: 'Patrocinador' as 'Anúncio' | 'Publicidade' | 'Patrocinador'
   });
 
   const [confirmModal, setConfirmModal] = useState<{
@@ -87,12 +90,14 @@ export default function AdminAdManager({ db, employeeEmail, hasPermission, onRef
         endDate: campaign.endDate,
         priority: campaign.priority,
         maxViews: campaign.maxViews,
+        clicksCount: campaign.clicksCount, // preserve click states if any
         maxClicks: campaign.maxClicks,
         position: campaign.position,
         status: campaign.status,
         audioUrl: campaign.audioUrl || '',
-        image: campaign.image || ''
-      });
+        image: campaign.image || '',
+        classification: campaign.classification || 'Anúncio'
+      } as any);
     } else {
       setEditingCampaign(null);
       setCampaignForm({
@@ -106,7 +111,8 @@ export default function AdminAdManager({ db, employeeEmail, hasPermission, onRef
         position: 'Banner Home',
         status: 'Ativo',
         audioUrl: '',
-        image: ''
+        image: '',
+        classification: 'Anúncio'
       });
     }
     setCampaignModalOpen(true);
@@ -128,7 +134,8 @@ export default function AdminAdManager({ db, employeeEmail, hasPermission, onRef
         position: campaignForm.position,
         status: campaignForm.status,
         audioUrl: campaignForm.audioUrl || undefined,
-        image: campaignForm.image || undefined
+        image: campaignForm.image || undefined,
+        classification: campaignForm.classification
       };
       await TRS_Database_Service.update('campaigns', editingCampaign.id, updated, employeeEmail);
     } else {
@@ -146,7 +153,8 @@ export default function AdminAdManager({ db, employeeEmail, hasPermission, onRef
         position: campaignForm.position,
         status: campaignForm.status,
         audioUrl: campaignForm.audioUrl || undefined,
-        image: campaignForm.image || undefined
+        image: campaignForm.image || undefined,
+        classification: campaignForm.classification
       };
       await TRS_Database_Service.insert('campaigns', created, employeeEmail);
     }
@@ -183,7 +191,8 @@ export default function AdminAdManager({ db, employeeEmail, hasPermission, onRef
         status: sponsor.status,
         contactPerson: sponsor.contactPerson,
         contactEmail: sponsor.contactEmail,
-        contributionLevel: sponsor.contributionLevel
+        contributionLevel: sponsor.contributionLevel,
+        classification: sponsor.classification || 'Patrocinador'
       });
     } else {
       setEditingSponsor(null);
@@ -194,7 +203,8 @@ export default function AdminAdManager({ db, employeeEmail, hasPermission, onRef
         status: 'Ativo',
         contactPerson: '',
         contactEmail: '',
-        contributionLevel: 'Gold'
+        contributionLevel: 'Gold',
+        classification: 'Patrocinador'
       });
     }
     setSponsorModalOpen(true);
@@ -212,7 +222,8 @@ export default function AdminAdManager({ db, employeeEmail, hasPermission, onRef
         status: sponsorForm.status,
         contactPerson: sponsorForm.contactPerson,
         contactEmail: sponsorForm.contactEmail,
-        contributionLevel: sponsorForm.contributionLevel
+        contributionLevel: sponsorForm.contributionLevel,
+        classification: sponsorForm.classification
       };
       await TRS_Database_Service.update('sponsors', editingSponsor.id, updated, employeeEmail);
     } else {
@@ -224,7 +235,8 @@ export default function AdminAdManager({ db, employeeEmail, hasPermission, onRef
         status: sponsorForm.status,
         contactPerson: sponsorForm.contactPerson,
         contactEmail: sponsorForm.contactEmail,
-        contributionLevel: sponsorForm.contributionLevel
+        contributionLevel: sponsorForm.contributionLevel,
+        classification: sponsorForm.classification
       };
       await TRS_Database_Service.insert('sponsors', created, employeeEmail);
     }
@@ -376,9 +388,16 @@ export default function AdminAdManager({ db, employeeEmail, hasPermission, onRef
                       <td className="p-4">
                         <div className="min-w-0 space-y-0.5">
                           <p className="font-extrabold text-white">{item.title}</p>
-                          <p className="text-[10px] text-slate-500 flex items-center gap-1.5">
+                          <p className="text-[10px] text-slate-500 flex items-center gap-1.5 flex-wrap">
                             <span className="px-1.5 py-0.5 bg-slate-950 border border-slate-850 text-amber-500 rounded font-mono font-bold text-[8px]">
                               {item.position}
+                            </span>
+                            <span className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider ${
+                              item.classification === 'Patrocinador' ? 'bg-amber-950/60 text-amber-400 border border-amber-500/10' :
+                              item.classification === 'Publicidade' ? 'bg-blue-950/60 text-blue-400 border border-blue-500/10' :
+                              'bg-emerald-950/60 text-emerald-400 border border-emerald-500/10'
+                            }`}>
+                              {item.classification || 'Anúncio'}
                             </span>
                             Prioridade: <strong className="text-slate-400 font-bold">{item.priority}</strong>
                           </p>
@@ -511,7 +530,16 @@ export default function AdminAdManager({ db, employeeEmail, hasPermission, onRef
                           }}
                         />
                         <div className="min-w-0">
-                          <p className="font-extrabold text-white">{item.name}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="font-extrabold text-white">{item.name}</p>
+                            <span className={`px-1.5 py-0.2 rounded text-[7px] font-black uppercase tracking-wider ${
+                              item.classification === 'Anúncio' ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-500/10' :
+                              item.classification === 'Publicidade' ? 'bg-blue-950/60 text-blue-400 border border-blue-500/10' :
+                              'bg-amber-950/60 text-amber-400 border border-amber-500/10'
+                            }`}>
+                              {item.classification || 'Patrocinador'}
+                            </span>
+                          </div>
                           {item.website && (
                             <a 
                               href={item.website} 
@@ -607,6 +635,26 @@ export default function AdminAdManager({ db, employeeEmail, hasPermission, onRef
                   required
                   className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-amber-500"
                 />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase text-amber-500">Classificação Comercial</label>
+                <div className="grid grid-cols-3 gap-2 bg-slate-950 p-1.5 rounded-xl border border-slate-800">
+                  {(['Anúncio', 'Publicidade', 'Patrocinador'] as const).map((type) => (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => setCampaignForm(prev => ({ ...prev, classification: type }))}
+                      className={`py-2 rounded-lg text-[10px] font-extrabold uppercase tracking-wider transition-all cursor-pointer ${
+                        (campaignForm.classification || 'Anúncio') === type
+                          ? 'bg-amber-500 text-slate-950 font-black shadow-md shadow-amber-500/10'
+                          : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                      }`}
+                    >
+                      {type}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -823,6 +871,26 @@ export default function AdminAdManager({ db, employeeEmail, hasPermission, onRef
                   required
                   className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-amber-500"
                 />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase text-amber-500">Classificação Comercial</label>
+                <div className="grid grid-cols-3 gap-2 bg-slate-950 p-1.5 rounded-xl border border-slate-800">
+                  {(['Anúncio', 'Publicidade', 'Patrocinador'] as const).map((type) => (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => setSponsorForm(prev => ({ ...prev, classification: type }))}
+                      className={`py-2 rounded-lg text-[10px] font-extrabold uppercase tracking-wider transition-all cursor-pointer ${
+                        (sponsorForm.classification || 'Patrocinador') === type
+                          ? 'bg-amber-500 text-slate-950 font-black shadow-md shadow-amber-500/10'
+                          : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                      }`}
+                    >
+                      {type}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

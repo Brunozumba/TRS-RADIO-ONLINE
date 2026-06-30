@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Radio, LayoutDashboard, Newspaper, Megaphone, Users, MessageSquare, 
   Settings, LogOut, ArrowLeft, Menu, X, Cloud, CloudOff, RefreshCw,
-  User as UserIcon, ShieldAlert
+  User as UserIcon, ShieldAlert, Edit3, UserCog, Camera, Save
 } from 'lucide-react';
 import { TRS_Database, TRS_Database_Service, Employee } from '../../services/db';
 
@@ -30,6 +30,96 @@ export default function AdminPanel({ onBackToSite }: AdminPanelProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
 
+  // Toast notification state
+  const [toast, setToast] = useState<{
+    message: string;
+    type: 'success' | 'error' | 'info';
+    visible: boolean;
+  }>({
+    message: '',
+    type: 'success',
+    visible: false
+  });
+
+  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
+    setToast({ message, type, visible: true });
+    setTimeout(() => {
+      setToast(prev => ({ ...prev, visible: false }));
+    }, 4000);
+  };
+
+  // Profile edit states
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    password: '',
+    avatar: ''
+  });
+
+  const handleOpenProfileModal = () => {
+    if (!currentEmployee) return;
+    setProfileForm({
+      name: currentEmployee.name,
+      email: currentEmployee.email,
+      phone: currentEmployee.phone,
+      password: currentEmployee.passwordHash,
+      avatar: currentEmployee.avatar
+    });
+    setProfileModalOpen(true);
+  };
+
+  const handleProfileImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfileForm(prev => ({ ...prev, avatar: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentEmployee || !database) return;
+
+    if (!profileForm.name || !profileForm.email) {
+      showToast('Nome e E-mail são obrigatórios.', 'error');
+      return;
+    }
+
+    try {
+      const updatedFields = {
+        name: profileForm.name,
+        email: profileForm.email,
+        phone: profileForm.phone,
+        passwordHash: profileForm.password,
+        avatar: profileForm.avatar
+      };
+
+      await TRS_Database_Service.update('employees', currentEmployee.id, updatedFields, currentEmployee.email);
+      
+      // Update session in case email changed
+      localStorage.setItem('trs_admin_session', profileForm.email);
+      
+      await TRS_Database_Service.addLog(
+        profileForm.email,
+        'Perfil atualizado',
+        'SETTINGS',
+        'O utilizador atualizou as suas próprias informações de perfil (Nome, Telefone, Avatar ou Senha).'
+      );
+
+      setProfileModalOpen(false);
+      await handleRefresh();
+      showToast('Perfil pessoal atualizado com sucesso!', 'success');
+    } catch (err: any) {
+      console.error(err);
+      showToast('Erro ao guardar as alterações do perfil.', 'error');
+    }
+  };
+
   // Initialize DB & load session
   useEffect(() => {
     const init = async () => {
@@ -51,6 +141,16 @@ export default function AdminPanel({ onBackToSite }: AdminPanelProps) {
       setIsLoading(false);
     };
     init();
+
+    // Subscribe to DB updates for real-time frontend and admin synchronization
+    const unsubscribe = TRS_Database_Service.subscribe(async () => {
+      const db = await TRS_Database_Service.getDatabase();
+      setDatabase(db);
+    });
+
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   const handleRefresh = async () => {
@@ -193,20 +293,27 @@ export default function AdminPanel({ onBackToSite }: AdminPanelProps) {
           </button>
 
           {/* User Details */}
-          <div className="flex items-center gap-2.5 pl-3 border-l border-slate-900">
+          <button 
+            onClick={handleOpenProfileModal}
+            className="flex items-center gap-2.5 pl-3 border-l border-slate-900 hover:opacity-85 transition-all cursor-pointer group text-left focus:outline-none"
+            title="Editar o meu perfil pessoal"
+          >
             <img 
               src={currentEmployee.avatar} 
               alt="" 
-              className="w-8 h-8 rounded-full border border-slate-850 object-cover"
+              className="w-8 h-8 rounded-full border border-slate-850 object-cover group-hover:border-amber-500 transition-all"
               onError={(e) => {
                 (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80';
               }}
             />
             <div className="hidden sm:block text-left min-w-0">
-              <p className="text-xs font-black text-white truncate max-w-[120px]">{currentEmployee.name}</p>
+              <div className="flex items-center gap-1.5">
+                <p className="text-xs font-black text-white truncate max-w-[120px] group-hover:text-amber-400 transition-all">{currentEmployee.name}</p>
+                <Edit3 className="w-2.5 h-2.5 text-slate-500 group-hover:text-amber-400 opacity-60 group-hover:opacity-100 transition-all" />
+              </div>
               <p className="text-[9px] font-black uppercase text-amber-500 font-mono tracking-wider">{activeRole ? activeRole.name : 'Acesso'}</p>
             </div>
-          </div>
+          </button>
 
         </div>
       </header>
@@ -254,6 +361,14 @@ export default function AdminPanel({ onBackToSite }: AdminPanelProps) {
               >
                 <ArrowLeft className="w-4 h-4" />
                 Voltar ao Site Público
+              </button>
+
+              <button
+                onClick={handleOpenProfileModal}
+                className="w-full px-3 py-2 text-xs font-bold text-slate-400 hover:text-white flex items-center gap-3 hover:bg-slate-900/30 rounded-xl cursor-pointer"
+              >
+                <UserCog className="w-4 h-4 text-amber-500" />
+                Editar Meu Perfil
               </button>
 
               <button
@@ -306,6 +421,7 @@ export default function AdminPanel({ onBackToSite }: AdminPanelProps) {
                 db={database} 
                 hasPermission={hasPermission} 
                 onRefresh={handleRefresh}
+                showToast={showToast}
               />
             )}
 
@@ -315,6 +431,7 @@ export default function AdminPanel({ onBackToSite }: AdminPanelProps) {
                 employeeEmail={currentEmployee.email}
                 hasPermission={hasPermission}
                 onRefresh={handleRefresh}
+                showToast={showToast}
               />
             )}
 
@@ -324,6 +441,7 @@ export default function AdminPanel({ onBackToSite }: AdminPanelProps) {
                 employeeEmail={currentEmployee.email}
                 hasPermission={hasPermission}
                 onRefresh={handleRefresh}
+                showToast={showToast}
               />
             )}
 
@@ -333,6 +451,7 @@ export default function AdminPanel({ onBackToSite }: AdminPanelProps) {
                 employeeEmail={currentEmployee.email}
                 hasPermission={hasPermission}
                 onRefresh={handleRefresh}
+                showToast={showToast}
               />
             )}
 
@@ -342,6 +461,7 @@ export default function AdminPanel({ onBackToSite }: AdminPanelProps) {
                 employeeEmail={currentEmployee.email}
                 hasPermission={hasPermission}
                 onRefresh={handleRefresh}
+                showToast={showToast}
               />
             )}
 
@@ -351,6 +471,7 @@ export default function AdminPanel({ onBackToSite }: AdminPanelProps) {
                 employeeEmail={currentEmployee.email}
                 hasPermission={hasPermission}
                 onRefresh={handleRefresh}
+                showToast={showToast}
               />
             )}
           </div>
@@ -358,6 +479,141 @@ export default function AdminPanel({ onBackToSite }: AdminPanelProps) {
         </main>
 
       </div>
+
+      {/* Profile Editing Modal */}
+      {profileModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-fadeIn">
+          <div className="w-full max-w-lg bg-slate-950 border border-slate-900 rounded-2xl shadow-2xl overflow-hidden">
+            
+            {/* Modal Header */}
+            <div className="p-5 border-b border-slate-900 flex justify-between items-center bg-slate-900/30">
+              <div className="flex items-center gap-2">
+                <UserCog className="w-5 h-5 text-amber-500" />
+                <h3 className="font-extrabold text-sm uppercase tracking-wider text-white">Editar o Meu Perfil</h3>
+              </div>
+              <button 
+                onClick={() => setProfileModalOpen(false)}
+                className="p-1 hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body / Form */}
+            <form onSubmit={handleSaveProfile} className="p-6 space-y-5">
+              
+              {/* Profile Picture Upload & Preview */}
+              <div className="flex flex-col items-center gap-3 bg-slate-900/20 p-4 border border-slate-900/60 rounded-xl">
+                <div className="relative group">
+                  <img 
+                    src={profileForm.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80'} 
+                    alt="Foto de perfil" 
+                    className="w-20 h-20 rounded-full border-2 border-slate-800 object-cover group-hover:border-amber-500 transition-all"
+                  />
+                  <label className="absolute bottom-0 right-0 p-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-full cursor-pointer shadow-md transition-all">
+                    <Camera className="w-3.5 h-3.5" />
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      onChange={handleProfileImageUpload} 
+                      className="hidden" 
+                    />
+                  </label>
+                </div>
+                <div className="text-center">
+                  <span className="text-[10px] font-mono text-slate-500">Clique no ícone de câmara para alterar a sua foto de perfil</span>
+                </div>
+              </div>
+
+              {/* Name */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] uppercase font-mono tracking-wider text-slate-400 block font-bold">Nome Completo</label>
+                <input 
+                  type="text" 
+                  value={profileForm.name} 
+                  onChange={e => setProfileForm(prev => ({ ...prev, name: e.target.value }))}
+                  required
+                  placeholder="Seu nome"
+                  className="w-full bg-slate-950 border border-slate-900 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500 transition-colors"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Email */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-mono tracking-wider text-slate-400 block font-bold">E-mail de Login</label>
+                  <input 
+                    type="email" 
+                    value={profileForm.email} 
+                    onChange={e => setProfileForm(prev => ({ ...prev, email: e.target.value }))}
+                    required
+                    placeholder="exemplo@trsradioonline.com"
+                    className="w-full bg-slate-950 border border-slate-900 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500 transition-colors"
+                  />
+                </div>
+
+                {/* Phone */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-mono tracking-wider text-slate-400 block font-bold">Telemóvel / Telefone</label>
+                  <input 
+                    type="text" 
+                    value={profileForm.phone} 
+                    onChange={e => setProfileForm(prev => ({ ...prev, phone: e.target.value }))}
+                    placeholder="+244 9..."
+                    className="w-full bg-slate-950 border border-slate-900 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500 transition-colors"
+                  />
+                </div>
+              </div>
+
+              {/* Password */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] uppercase font-mono tracking-wider text-slate-400 block font-bold">Senha de Acesso</label>
+                <input 
+                  type="password" 
+                  value={profileForm.password} 
+                  onChange={e => setProfileForm(prev => ({ ...prev, password: e.target.value }))}
+                  required
+                  placeholder="Insira a sua nova senha"
+                  className="w-full bg-slate-950 border border-slate-900 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500 transition-colors"
+                />
+              </div>
+
+              {/* Form Buttons */}
+              <div className="flex gap-3 justify-end pt-2">
+                <button 
+                  type="button" 
+                  onClick={() => setProfileModalOpen(false)}
+                  className="px-4 py-2.5 border border-slate-900 hover:bg-slate-900 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition-all cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="submit"
+                  className="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-black uppercase flex items-center gap-1.5 transition-all cursor-pointer shadow-lg shadow-amber-500/10"
+                >
+                  <Save className="w-4 h-4" />
+                  Salvar Alterações
+                </button>
+              </div>
+
+            </form>
+
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toast.visible && (
+        <div className={`fixed bottom-6 right-6 px-4 py-3 rounded-xl border shadow-2xl flex items-center gap-3 z-[200] max-w-sm animate-slideIn ${
+          toast.type === 'success' ? 'bg-emerald-950/90 text-emerald-300 border-emerald-500/30' :
+          toast.type === 'error' ? 'bg-red-950/90 text-red-300 border-red-500/30' :
+          'bg-blue-950/90 text-blue-300 border-blue-500/30'
+        }`}>
+          <span className="w-2 h-2 rounded-full bg-current animate-ping shrink-0" />
+          <span className="text-xs font-bold leading-normal">{toast.message}</span>
+        </div>
+      )}
+
     </div>
   );
 }

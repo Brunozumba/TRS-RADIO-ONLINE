@@ -11,9 +11,10 @@ interface AdminContentProps {
   employeeEmail: string;
   hasPermission: (module: string, action: 'view' | 'manage') => boolean;
   onRefresh: () => void;
+  showToast?: (message: string, type?: 'success' | 'error' | 'info') => void;
 }
 
-export default function AdminContent({ db, employeeEmail, hasPermission, onRefresh }: AdminContentProps) {
+export default function AdminContent({ db, employeeEmail, hasPermission, onRefresh, showToast }: AdminContentProps) {
   const [activeSubTab, setActiveSubTab] = useState<'news' | 'schedule'>('news');
   const [newsSearch, setNewsSearch] = useState('');
   const [scheduleSearch, setScheduleSearch] = useState('');

@@ -41,6 +41,8 @@ export default function Schedule() {
       }
     };
     fetchShows();
+
+    return TRS_Database_Service.subscribe(fetchShows);
   }, []);
 
   const getActiveSchedule = (): Show[] => {

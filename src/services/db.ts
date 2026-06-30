@@ -7,6 +7,7 @@ import {
   SUNDAY_SCHEDULE, 
   INITIAL_SONG_REQUESTS 
 } from '../data';
+import databaseSeed from './database_seed.json';
 
 // ==========================================
 // ADMIN DB SCHEMAS & INTERFACES
@@ -72,6 +73,7 @@ export interface Sponsor {
   contactPerson: string;
   contactEmail: string;
   contributionLevel: 'Gold' | 'Silver' | 'Bronze' | 'Premium';
+  classification?: 'Anúncio' | 'Publicidade' | 'Patrocinador';
 }
 
 export interface CalendarEvent {
@@ -126,6 +128,7 @@ export interface AdCampaign {
   audioUrl?: string; // Audio ads play automatically
   status: 'Ativo' | 'Pausado' | 'Expirado';
   image?: string; // base64 uploaded banner image
+  classification?: 'Anúncio' | 'Publicidade' | 'Patrocinador';
 }
 
 // Global DB Shape
@@ -506,6 +509,24 @@ const LOCAL_STORAGE_KEY = 'trs_online_virtual_sheet_db';
 
 export class TRS_Database_Service {
   private static cachedDb: TRS_Database | null = null;
+  private static listeners: (() => void)[] = [];
+
+  public static subscribe(listener: () => void): () => void {
+    this.listeners.push(listener);
+    return () => {
+      this.listeners = this.listeners.filter(l => l !== listener);
+    };
+  }
+
+  private static notify() {
+    for (const listener of this.listeners) {
+      try {
+        listener();
+      } catch (err) {
+        console.error('Error in db subscriber:', err);
+      }
+    }
+  }
 
   // Initialize DB with seed values if empty
   public static getDB(): TRS_Database {
@@ -547,20 +568,16 @@ export class TRS_Database_Service {
 
         // AUTO-MIGRATION & UPGRADE OF EMPTY DATA TABLES
         if (!parsedDb.news || parsedDb.news.length === 0) {
-          parsedDb.news = NEWS_DATA;
+          parsedDb.news = databaseSeed.news as any;
         }
         if (!parsedDb.shows || parsedDb.shows.length === 0) {
-          parsedDb.shows = [
-            ...WEEKDAY_SCHEDULE.map(s => ({ ...s, day: 'Segunda a Sexta' as const })),
-            ...SATURDAY_SCHEDULE.map(s => ({ ...s, day: 'Sábado' as const })),
-            ...SUNDAY_SCHEDULE.map(s => ({ ...s, day: 'Domingo' as const }))
-          ];
+          parsedDb.shows = databaseSeed.shows as any;
         }
         if (!parsedDb.banners || parsedDb.banners.length === 0) {
-          parsedDb.banners = ADS_DATA;
+          parsedDb.banners = databaseSeed.banners as any;
         }
         if (!parsedDb.songRequests || parsedDb.songRequests.length === 0) {
-          parsedDb.songRequests = INITIAL_SONG_REQUESTS;
+          parsedDb.songRequests = databaseSeed.songRequests as any;
         }
 
         if (parsedDb.config) {
@@ -577,37 +594,8 @@ export class TRS_Database_Service {
       }
     }
 
-    // Default seed
-    const defaultDb: TRS_Database = {
-      roles: INITIAL_ROLES,
-      employees: INITIAL_EMPLOYEES,
-      news: NEWS_DATA,
-      shows: [
-        ...WEEKDAY_SCHEDULE.map(s => ({ ...s, day: 'Segunda a Sexta' as const })),
-        ...SATURDAY_SCHEDULE.map(s => ({ ...s, day: 'Sábado' as const })),
-        ...SUNDAY_SCHEDULE.map(s => ({ ...s, day: 'Domingo' as const }))
-      ],
-      podcasts: INITIAL_PODCASTS,
-      sponsors: INITIAL_SPONSORS,
-      banners: ADS_DATA,
-      campaigns: INITIAL_CAMPAIGNS,
-      events: INITIAL_EVENTS,
-      messages: INITIAL_MESSAGES,
-      logs: INITIAL_LOGS,
-      config: {
-        radioName: 'TRS Rádio Online',
-        slogan: 'A Música Sem Fronteiras',
-        streamUrl: 'https://link.radio.br:17308/stream',
-        phone: '+244 926 874 444',
-        whatsappUrl: 'https://wa.me/244926874444',
-        email: 'contacto@trsradioonline.com',
-        address: 'Luanda, Angola',
-        maintenanceMode: false,
-        googleAppsScriptUrl: '', // Empty by default
-        googleSpreadsheetId: ''  // Direct Google Sheets ID
-      },
-      songRequests: INITIAL_SONG_REQUESTS
-    };
+    // Default seed cloned from imported JSON seed to prevent mutation issues
+    const defaultDb: TRS_Database = JSON.parse(JSON.stringify(databaseSeed)) as TRS_Database;
 
     this.saveDB(defaultDb);
     this.cachedDb = defaultDb;
@@ -621,6 +609,26 @@ export class TRS_Database_Service {
   private static saveDB(db: TRS_Database) {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(db));
     this.cachedDb = db;
+    this.notify();
+
+    // Send the update to the local Express backend (writes back to database_seed.json)
+    fetch('/api/save-database', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(db)
+    })
+      .then(res => {
+        if (res.ok) {
+          console.log('[LOCAL SERVER] Database saved to disk seed successfully');
+        } else {
+          console.warn('[LOCAL SERVER] Database save request rejected');
+        }
+      })
+      .catch(err => {
+        console.warn('[LOCAL SERVER] Background save not available (this is normal in production on Cloudflare):', err.message);
+      });
   }
 
   // ==========================================
@@ -693,6 +701,8 @@ export class TRS_Database_Service {
       }
     }
 
+    this.notify();
+
     return row;
   }
 
@@ -734,6 +744,8 @@ export class TRS_Database_Service {
       }
     }
 
+    this.notify();
+
     return true;
   }
 
@@ -774,6 +786,8 @@ export class TRS_Database_Service {
         console.error('Google Sheet Sync Error:', e);
       }
     }
+
+    this.notify();
 
     return true;
   }

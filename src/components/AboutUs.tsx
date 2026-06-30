@@ -8,7 +8,11 @@ export default function AboutUs() {
   const [config, setConfig] = useState(() => TRS_Database_Service.getDatabase().config);
 
   useEffect(() => {
-    setConfig(TRS_Database_Service.getDatabase().config);
+    const updateConfig = () => {
+      setConfig(TRS_Database_Service.getDatabase().config);
+    };
+    updateConfig();
+    return TRS_Database_Service.subscribe(updateConfig);
   }, []);
 
   // Format the text into paragraphs for cleaner reading

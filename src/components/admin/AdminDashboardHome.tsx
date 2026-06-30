@@ -13,9 +13,10 @@ interface AdminDashboardHomeProps {
   db: TRS_Database;
   onRefresh: () => void;
   hasPermission?: (module: string, action: 'view' | 'manage') => boolean;
+  showToast?: (message: string, type?: 'success' | 'error' | 'info') => void;
 }
 
-export default function AdminDashboardHome({ db, onRefresh }: AdminDashboardHomeProps) {
+export default function AdminDashboardHome({ db, onRefresh, showToast }: AdminDashboardHomeProps) {
   // Live simulation state
   const [onlineListeners, setOnlineListeners] = useState(145);
   const [recentLogs, setRecentLogs] = useState<SystemLog[]>([]);

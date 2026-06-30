@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import AudioPlayer from './components/AudioPlayer';
 import Schedule from './components/Schedule';
 import AboutUs from './components/AboutUs';
@@ -21,6 +21,12 @@ export default function App() {
   const [viewMode, setViewMode] = useState<'site' | 'admin'>('site');
   const [activeTab, setActiveTab] = useState<'news' | 'requests' | 'schedule' | 'about' | 'advertising'>('news');
   const [db, setDb] = useState(() => TRS_Database_Service.getDatabase());
+
+  useEffect(() => {
+    return TRS_Database_Service.subscribe(() => {
+      setDb(TRS_Database_Service.getDatabase());
+    });
+  }, []);
 
   const handleBackToSite = () => {
     setDb(TRS_Database_Service.getDatabase());

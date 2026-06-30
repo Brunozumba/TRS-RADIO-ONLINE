@@ -17,9 +17,10 @@ interface AdminSettingsProps {
   employeeEmail: string;
   hasPermission: (module: string, action: 'view' | 'manage') => boolean;
   onRefresh: () => void;
+  showToast?: (message: string, type?: 'success' | 'error' | 'info') => void;
 }
 
-export default function AdminSettings({ db, employeeEmail, hasPermission, onRefresh }: AdminSettingsProps) {
+export default function AdminSettings({ db, employeeEmail, hasPermission, onRefresh, showToast }: AdminSettingsProps) {
   const [configForm, setConfigForm] = useState<SystemConfig>({ ...db.config });
   const [copied, setCopied] = useState(false);
   const [confirmModal, setConfirmModal] = useState<{

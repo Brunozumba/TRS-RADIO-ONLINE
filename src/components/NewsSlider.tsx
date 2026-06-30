@@ -42,14 +42,7 @@ export default function NewsSlider() {
     };
     fetchNews();
 
-    // Listen for custom news update events to refresh slider dynamically
-    const handleNewsRefresh = () => {
-      fetchNews();
-    };
-    window.addEventListener('news_updated', handleNewsRefresh);
-    return () => {
-      window.removeEventListener('news_updated', handleNewsRefresh);
-    };
+    return TRS_Database_Service.subscribe(fetchNews);
   }, []);
 
   useEffect(() => {

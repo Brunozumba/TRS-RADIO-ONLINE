@@ -1,0 +1,613 @@
+{
+  "roles": [
+    {
+      "id": "role-superadmin",
+      "name": "Super Administrador",
+      "description": "Acesso total e irrestrito a todos os módulos, configurações e backups.",
+      "permissions": {
+        "dashboard": "manage",
+        "news": "manage",
+        "schedule": "manage",
+        "advertising": "manage",
+        "users": "manage",
+        "logs": "manage",
+        "settings": "manage",
+        "messages": "manage"
+      }
+    },
+    {
+      "id": "role-admin",
+      "name": "Administrador",
+      "description": "Pode gerenciar conteúdos, publicidade e mensagens, mas não altera permissões de utilizadores.",
+      "permissions": {
+        "dashboard": "manage",
+        "news": "manage",
+        "schedule": "manage",
+        "advertising": "manage",
+        "users": "view",
+        "logs": "view",
+        "settings": "view",
+        "messages": "manage"
+      }
+    },
+    {
+      "id": "role-jornalista",
+      "name": "Jornalista / Editor",
+      "description": "Gestão integral de notícias, blogue de cultura e moderação de pedidos.",
+      "permissions": {
+        "dashboard": "view",
+        "news": "manage",
+        "schedule": "view",
+        "advertising": "none",
+        "users": "none",
+        "logs": "none",
+        "settings": "none",
+        "messages": "view"
+      }
+    },
+    {
+      "id": "role-comercial",
+      "name": "Diretor Comercial",
+      "description": "Controlo exclusivo de campanhas publicitárias, anunciantes, patrocinadores e métricas de anúncios.",
+      "permissions": {
+        "dashboard": "view",
+        "news": "none",
+        "schedule": "none",
+        "advertising": "manage",
+        "users": "none",
+        "logs": "none",
+        "settings": "none",
+        "messages": "view"
+      }
+    },
+    {
+      "id": "role-locutor",
+      "name": "Locutor de Rádio",
+      "description": "Visualiza a grelha de programação, aprova pedidos de músicas e lê mensagens de ouvintes.",
+      "permissions": {
+        "dashboard": "view",
+        "news": "view",
+        "schedule": "view",
+        "advertising": "none",
+        "users": "none",
+        "logs": "none",
+        "settings": "none",
+        "messages": "manage"
+      }
+    }
+  ],
+  "employees": [
+    {
+      "id": "emp-1",
+      "name": "António Silva",
+      "avatar": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
+      "roleId": "role-superadmin",
+      "email": "dinhosantanap@gmail.com",
+      "phone": "+244 926 874 444",
+      "admissionDate": "2023-01-10",
+      "status": "Ativo",
+      "lastAccess": "Hoje, 09:30",
+      "passwordHash": "trsonline@1"
+    },
+    {
+      "id": "emp-2",
+      "name": "Cláudia Tomás",
+      "avatar": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80",
+      "roleId": "role-admin",
+      "email": "claudia@trsradioonline.com",
+      "phone": "+244 911 223 344",
+      "admissionDate": "2024-03-15",
+      "status": "Ativo",
+      "lastAccess": "Hoje, 11:15",
+      "passwordHash": "claudia123"
+    },
+    {
+      "id": "emp-3",
+      "name": "Mestre Cabinda",
+      "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+      "roleId": "role-locutor",
+      "email": "cabinda@trsradioonline.com",
+      "phone": "+244 932 456 789",
+      "admissionDate": "2023-05-20",
+      "status": "Ativo",
+      "lastAccess": "Ontem, 20:45",
+      "passwordHash": "cabinda123"
+    },
+    {
+      "id": "emp-4",
+      "name": "Irmã Conceição",
+      "avatar": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80",
+      "roleId": "role-locutor",
+      "email": "conceicao@trsradioonline.com",
+      "phone": "+244 923 111 222",
+      "admissionDate": "2023-11-01",
+      "status": "Ativo",
+      "lastAccess": "Hoje, 08:05",
+      "passwordHash": "louvor123"
+    },
+    {
+      "id": "emp-5",
+      "name": "João Baptista",
+      "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
+      "roleId": "role-comercial",
+      "email": "joao.vendas@trsradioonline.com",
+      "phone": "+244 925 555 666",
+      "admissionDate": "2025-02-18",
+      "status": "Ativo",
+      "lastAccess": "Há 3 dias",
+      "passwordHash": "joao123"
+    }
+  ],
+  "news": [
+    {
+      "id": "news1",
+      "title": "Festival Internacional de Ritmos em Luanda atrai milhares de fãs de Kizomba e Semba",
+      "excerpt": "O festival anual regressou em grande estilo na Baía de Luanda, reunindo os maiores nomes nacionais e internacionais da música africana.",
+      "content": "O Festival Internacional de Ritmos de Luanda superou todas as expectativas este fim de semana, com mais de 50 mil espetadores a preencherem a icónica Baía de Luanda. O evento, que celebra a riqueza dos ritmos angolanos, contou com atuações memoráveis de grandes nomes como Anselmo Ralph, Yola Semedo, e jovens talentos do Semba contemporâneo.\n\nDurante três dias de festa, os ritmos da Kizomba, do Semba, do Kuduro e do Afro-house ecoaram pela capital angolana, mostrando a força e a vitalidade da nossa identidade cultural. Além dos palcos principais, o certame ofereceu feiras gastronómicas, workshops de dança tradicional, e espaços interativos para novos artistas divulgarem as suas obras digitais.",
+      "category": "Eventos",
+      "image": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&auto=format&fit=crop&q=60",
+      "date": "29 Jun 2026",
+      "views": 1240,
+      "author": "Equipa TRS"
+    },
+    {
+      "id": "news2",
+      "title": "Novo álbum de Anselmo Ralph bate recordes de reprodução digital",
+      "excerpt": "O novo trabalho discográfico do consagrado músico angolano conquistou o topo das tabelas em Angola, Portugal e Moçambique.",
+      "content": "Anselmo Ralph voltou a fazer história na música lusófona. Lançado na passada sexta-feira, o seu mais recente álbum de originais alcançou o primeiro lugar de reproduções nas plataformas digitais mais conhecidas (Spotify, Apple Music e YouTube) em menos de 24 horas.\n\nComposto por 12 faixas românticas repletas de colaborações internacionais fantásticas, o álbum funde com mestria a Kizomba tradicional com sonoridades Pop modernas. Numa entrevista exclusiva concedida aos microfones da TRS Rádio Online, o cantor agradeceu o apoio fervoroso de todos os ouvintes: \"Este disco é uma carta de amor dedicada aos meus fãs de Angola e de todo o mundo. Sem vocês, nada disto seria possível.\"",
+      "category": "Música",
+      "image": "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop&q=60",
+      "date": "28 Jun 2026",
+      "views": 3820,
+      "author": "António Silva"
+    },
+    {
+      "id": "news3",
+      "title": "Kizomba e Semba propostos para património cultural imaterial pela UNESCO",
+      "excerpt": "O Ministério da Cultura e Turismo angolano oficializou a candidatura destes ritmos que definem a alma e a dança de Angola.",
+      "content": "A dança e os ritmos da Kizomba e do Semba deram um passo crucial rumo ao reconhecimento global. Numa iniciativa liderada pelo Ministério da Cultura, foi formalizada junto da UNESCO a candidatura destas manifestações artísticas a Património Cultural Imaterial da Humanidade.\n\nEspecialistas afirmam que este marco trará enormes incentivos para a salvaguarda das tradições locais, dinamizando a economia criativa de Angola. A nível mundial, a Kizomba transformou-se num fenómeno sem fronteiras, com escolas de dança em locais tão diversos como Tóquio, Paris, Nova Iorque e Berlim, todas unidas pela magia do gingado angolano.",
+      "category": "Cultura",
+      "image": "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=800&auto=format&fit=crop&q=60",
+      "date": "26 Jun 2026",
+      "views": 940,
+      "author": "Cláudia Tomás"
+    },
+    {
+      "id": "news4",
+      "title": "Gospel em Destaque: Festival Louvor Sem Fronteiras enche pavilhão em Luanda",
+      "excerpt": "O encontro anual de adoração espiritual reuniu centenas de coros e vozes num momento único de fé e comunhão fraterna.",
+      "content": "Num final de tarde inesquecível de adoração, o Festival Louvor Sem Fronteiras reuniu mais de 10 mil cristãos num dos principais pavilhões multiusos de Luanda. O evento contou com participações notáveis de coros regionais, cantores consagrados e testemunhos inspiradores.\n\nPara a Irmã Conceição, locutora da TRS Rádio Online, o festival representa a união perfeita da música com a espiritualidade profunda: \"A música gospel tem o poder único de curar corações e aproximar as pessoas independentemente da sua origem ou dificuldades.\"",
+      "category": "Eventos",
+      "image": "https://images.unsplash.com/photo-1465847899084-d164df4dedc6?w=800&auto=format&fit=crop&q=60",
+      "date": "25 Jun 2026",
+      "views": 1560,
+      "author": "Irmã Conceição"
+    }
+  ],
+  "shows": [
+    {
+      "id": "wd1",
+      "title": "Madrugada Kizomba",
+      "timeStart": "00:00",
+      "timeEnd": "06:00",
+      "description": "Os ritmos mais sensuais e envolventes para aquecer a sua madrugada.",
+      "tag": "Kizomba",
+      "hosts": ["DJ Madrugada"],
+      "day": "Segunda a Sexta"
+    },
+    {
+      "id": "wd2",
+      "title": "Bom Dia África",
+      "timeStart": "06:00",
+      "timeEnd": "10:00",
+      "description": "Desperte com energia positiva, notícias da manhã e o melhor ritmo africano.",
+      "tag": "Matinal / Cultura",
+      "hosts": ["António Silva", "Cláudia Tomás"],
+      "day": "Segunda a Sexta"
+    },
+    {
+      "id": "wd3",
+      "title": "Raízes de Angola",
+      "timeStart": "10:00",
+      "timeEnd": "13:00",
+      "description": "Uma viagem profunda pela nossa identidade cultural, música tradicional, Semba e folclore.",
+      "tag": "Cultura / Tradicional",
+      "hosts": ["Mestre Cabinda"],
+      "day": "Segunda a Sexta"
+    },
+    {
+      "id": "wd4",
+      "title": "Túnel do Tempo",
+      "timeStart": "13:00",
+      "timeEnd": "14:00",
+      "description": "Recorde os clássicos inesquecíveis que marcaram gerações em Angola e no mundo.",
+      "tag": "Clássicos",
+      "hosts": ["Augusto Neto"],
+      "day": "Segunda a Sexta"
+    },
+    {
+      "id": "wd5",
+      "title": "Vibração da Tarde",
+      "timeStart": "14:00",
+      "timeEnd": "18:00",
+      "description": "Tardes cheias de ritmo, notícias de entretenimento e muita interatividade.",
+      "tag": "Entretenimento / Hits",
+      "hosts": ["Yola Semedo", "DJ VIP"],
+      "day": "Segunda a Sexta"
+    },
+    {
+      "id": "wd6",
+      "title": "Paixão Sem Fronteira",
+      "timeStart": "18:00",
+      "timeEnd": "20:00",
+      "description": "Músicas românticas, dedicatórias de amor e mensagens emocionantes para embalar o seu fim de tarde.",
+      "tag": "Romântico / Kizomba",
+      "hosts": ["Sílvia Cardoso"],
+      "day": "Segunda a Sexta"
+    },
+    {
+      "id": "wd7",
+      "title": "Noites Sem Fronteiras",
+      "timeStart": "20:00",
+      "timeEnd": "24:00",
+      "description": "A melhor seleção de música lusófona e internacional para terminar o seu dia em grande.",
+      "tag": "Nocturno",
+      "hosts": ["Nuno Santos"],
+      "day": "Segunda a Sexta"
+    },
+    {
+      "id": "sat1",
+      "title": "Top 50 da Semana",
+      "timeStart": "08:00",
+      "timeEnd": "13:00",
+      "description": "A contagem decrescente dos 50 maiores sucessos musicais que estão a bombar nas paradas.",
+      "tag": "Hits / Charts",
+      "hosts": ["DJ Top Angola"],
+      "day": "Sábado"
+    },
+    {
+      "id": "sat2",
+      "title": "Mix DJ Convidado",
+      "timeStart": "14:00",
+      "timeEnd": "18:00",
+      "description": "Sessões exclusivas de mixagem ao vivo com os melhores DJs convidados de Angola.",
+      "tag": "Electronic / Afrobeats / House",
+      "hosts": ["DJs de Renome"],
+      "day": "Sábado"
+    },
+    {
+      "id": "sat3",
+      "title": "Entrevistas",
+      "timeStart": "18:00",
+      "timeEnd": "21:00",
+      "description": "Conversas descontraídas e reveladoras com artistas, músicos e personalidades da nossa cultura.",
+      "tag": "Talk Show",
+      "hosts": ["Carlos Miguel"],
+      "day": "Sábado"
+    },
+    {
+      "id": "sun1",
+      "title": "Clássicos da Kizomba",
+      "timeStart": "09:00",
+      "timeEnd": "13:00",
+      "description": "O melhor da Kizomba do antigamente, relembrando os grandes compositores e passos de dança.",
+      "tag": "Kizomba Retro",
+      "hosts": ["Ti Mateus"],
+      "day": "Domingo"
+    },
+    {
+      "id": "sun2",
+      "title": "Música Gospel (Louvor Sem Fronteiras)",
+      "timeStart": "13:00",
+      "timeEnd": "17:00",
+      "description": "Momentos especiais de louvor, adoração, reflexão espiritual e música gospel nacional e internacional.",
+      "tag": "Gospel / Espiritualidade",
+      "hosts": ["Irmã Conceição"],
+      "day": "Domingo"
+    },
+    {
+      "id": "sun3",
+      "title": "Histórias dos Artistas",
+      "timeStart": "17:00",
+      "timeEnd": "21:00",
+      "description": "A biografia, os desafios e o percurso de sucesso dos maiores ícones da música angolana.",
+      "tag": "Biografia / Documentário",
+      "hosts": ["Dr. Manuel Cordeiro"],
+      "day": "Domingo"
+    }
+  ],
+  "podcasts": [
+    {
+      "id": "pod1",
+      "title": "A Evolução do Semba à Kizomba",
+      "description": "Mestre Cabinda convida historiadores musicais para debater como os ritmos tradicionais de Angola originaram a Kizomba moderna.",
+      "audioUrl": "https://stream.zeno.fm/f378v6v27reuv",
+      "duration": "45:30",
+      "publishDate": "2026-06-24",
+      "hosts": ["Mestre Cabinda", "Carlos Miguel"],
+      "views": 310
+    },
+    {
+      "id": "pod2",
+      "title": "Lendas da Rádio: O Legado de Ruy Mingas",
+      "description": "Edição especial dedicada à obra literária, canções patrióticas e influência cultural do mestre Ruy Mingas.",
+      "audioUrl": "https://stream.zeno.fm/f378v6v27reuv",
+      "duration": "58:15",
+      "publishDate": "2026-06-18",
+      "hosts": ["Augusto Neto"],
+      "views": 520
+    }
+  ],
+  "sponsors": [
+    {
+      "id": "spon1",
+      "name": "Kero Supermercados",
+      "logo": "https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=150&auto=format&fit=crop&q=60",
+      "website": "https://kero-angola.com",
+      "status": "Ativo",
+      "contactPerson": "Marcos Leitão",
+      "contactEmail": "mleitao@kero.co.ao",
+      "contributionLevel": "Gold"
+    },
+    {
+      "id": "spon2",
+      "name": "Unitel Angola",
+      "logo": "https://images.unsplash.com/photo-1614064641938-3bbee52942c7?w=150&auto=format&fit=crop&q=60",
+      "website": "https://unitel.ao",
+      "status": "Ativo",
+      "contactPerson": "Filomena Rocha",
+      "contactEmail": "frocha@unitel.co.ao",
+      "contributionLevel": "Gold"
+    },
+    {
+      "id": "spon3",
+      "name": "Banco BAI",
+      "logo": "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=150&auto=format&fit=crop&q=60",
+      "website": "https://bancobai.ao",
+      "status": "Ativo",
+      "contactPerson": "Eduardo Santos",
+      "contactEmail": "esantos@bancobai.ao",
+      "contributionLevel": "Premium"
+    },
+    {
+      "id": "spon4",
+      "name": "Cuca Cerveja",
+      "logo": "https://images.unsplash.com/photo-1568219656418-15932992ab4b?w=150&auto=format&fit=crop&q=60",
+      "website": "https://cuca.ao",
+      "status": "Ativo",
+      "contactPerson": "Álvaro Cruz",
+      "contactEmail": "acruz@cuca.ao",
+      "contributionLevel": "Silver"
+    }
+  ],
+  "banners": [
+    {
+      "id": "ad1",
+      "client": "Kero Supermercados",
+      "title": "Super Fim de Semana Kero!",
+      "tagline": "Descontos imbatíveis de até 30% em todos os frescos, talho e mercearia. Venha abastecer a despensa da sua família com qualidade extrema!",
+      "category": "Supermercados / Distribuição",
+      "ctaText": "Ver Folheto de Ofertas",
+      "ctaLink": "https://wa.me/244926874444?text=Quero%20saber%20as%20promocoes%20do%20Kero",
+      "gradient": "linear-gradient(135deg, #0f172a, #d97706, #1e293b)"
+    },
+    {
+      "id": "ad2",
+      "client": "Unitel Angola",
+      "title": "Internet Mais Rápida de Angola!",
+      "tagline": "Partilhe os seus momentos, ouça a TRS Rádio Online sem interrupções com os novos pacotes Net Ultra. Conectividade que une todos os angolanos.",
+      "category": "Telecomunicações",
+      "ctaText": "Aderir ao Plano Net",
+      "ctaLink": "https://wa.me/244926874444?text=Quero%20saber%20mais%20sobre%20pacotes%20Unitel",
+      "gradient": "linear-gradient(135deg, #0f172a, #dc2626, #1e293b)"
+    },
+    {
+      "id": "ad3",
+      "client": "Banco BAI",
+      "title": "Crédito Habitação Jovem BAI",
+      "tagline": "A oportunidade perfeita de conquistar a sua casa própria com juros bonificados e as melhores condições de financiamento do mercado.",
+      "category": "Banca / Finanças",
+      "ctaText": "Simular Crédito",
+      "ctaLink": "https://wa.me/244926874444?text=Quero%20informacoes%20sobre%20Credito%20Habitacao%20BAI",
+      "gradient": "linear-gradient(135deg, #1e1b4b, #4f46e5, #0f172a)"
+    },
+    {
+      "id": "ad4",
+      "client": "Kwanza Sul Logística",
+      "title": "Entregas Rápidas Luanda-Cabinda",
+      "tagline": "Conectamos a sua mercadoria, produtos e fardas ao interior de Angola em tempo recorde com segurança total garantida por via aérea ou terrestre.",
+      "category": "Transportes / Logística",
+      "ctaText": "Pedir Orçamento Grátis",
+      "ctaLink": "https://wa.me/244926874444?text=Quero%20fazer%20um%20orcamento%20de%20transporte%20Kwanza%20Sul",
+      "gradient": "linear-gradient(135deg, #0f172a, #15803d, #1e293b)"
+    }
+  ],
+  "campaigns": [
+    {
+      "id": "camp1",
+      "clientId": "ad1",
+      "title": "Campanha Fim de Semana Kero Frescos",
+      "startDate": "2026-06-25",
+      "endDate": "2026-07-15",
+      "priority": "Alta",
+      "viewsCount": 2480,
+      "maxViews": 10000,
+      "clicksCount": 145,
+      "maxClicks": 500,
+      "position": "Banner Home",
+      "status": "Ativo"
+    },
+    {
+      "id": "camp2",
+      "clientId": "ad2",
+      "title": "Unitel Net Ultra Verão",
+      "startDate": "2026-06-01",
+      "endDate": "2026-08-30",
+      "priority": "Alta",
+      "viewsCount": 4210,
+      "maxViews": 20000,
+      "clicksCount": 382,
+      "maxClicks": 1500,
+      "position": "Banner Player",
+      "status": "Ativo"
+    },
+    {
+      "id": "camp3",
+      "clientId": "ad3",
+      "title": "Banco BAI Habitação Jovem",
+      "startDate": "2026-06-15",
+      "endDate": "2026-12-31",
+      "priority": "Média",
+      "viewsCount": 1240,
+      "maxViews": 50000,
+      "clicksCount": 98,
+      "maxClicks": 3000,
+      "position": "Banner Notícias",
+      "status": "Ativo"
+    },
+    {
+      "id": "camp4",
+      "clientId": "ad4",
+      "title": "Kwanza Sul Logística Rápida",
+      "startDate": "2026-06-20",
+      "endDate": "2026-07-20",
+      "priority": "Baixa",
+      "viewsCount": 890,
+      "maxViews": 5000,
+      "clicksCount": 41,
+      "maxClicks": 200,
+      "position": "Banner Lateral",
+      "status": "Ativo"
+    }
+  ],
+  "events": [
+    {
+      "id": "evt1",
+      "title": "Gala Anual Kizomba Awards 2026",
+      "description": "O maior evento de premiação para os promotores da Kizomba em todo o mundo. A TRS estará transmitindo ao vivo.",
+      "date": "2026-07-12",
+      "time": "20:00",
+      "location": "Centro de Convenções de Talatona, Luanda",
+      "category": "Especial",
+      "image": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&auto=format&fit=crop&q=60"
+    },
+    {
+      "id": "evt2",
+      "title": "Festival Raízes de Semba",
+      "description": "Workshop de Semba e concertos tradicionais gratuitos na Baía de Luanda em celebração às origens angolanas.",
+      "date": "2026-08-05",
+      "time": "16:00",
+      "location": "Baía de Luanda, Angola",
+      "category": "Cultura",
+      "image": "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=800&auto=format&fit=crop&q=60"
+    }
+  ],
+  "messages": [
+    {
+      "id": "msg1",
+      "senderName": "António Ndongala",
+      "senderEmail": "ndongala@gmail.com",
+      "senderPhone": "+244 933 555 444",
+      "subject": "Sugestão de Programa Musical",
+      "message": "Olá equipa TRS! Adoro a rádio e ouço todos os dias. Seria excelente se criassem um programa focado exclusivamente no Semba acústico dos anos 80.",
+      "timestamp": "2026-06-29T11:40:00Z",
+      "isRead": false,
+      "replied": false
+    },
+    {
+      "id": "msg2",
+      "senderName": "Maria Antónia",
+      "senderEmail": "maria.ant@sapo.ao",
+      "senderPhone": "+244 912 345 678",
+      "subject": "Gospel de Domingo é fantástico",
+      "message": "Irmã Conceição, a sua pregação e a seleção de louvores deste último domingo tocou profundamente o meu coração. Muito obrigada pela luz que trazem às nossas vidas.",
+      "timestamp": "2026-06-28T16:22:00Z",
+      "isRead": true,
+      "replied": false
+    },
+    {
+      "id": "msg3",
+      "senderName": "Roberto Albuquerque",
+      "senderEmail": "roberto.vendas@empresa.pt",
+      "senderPhone": "+351 912 345 678",
+      "subject": "Pedido de Orçamento Publicitário",
+      "message": "Prezados Senhores, gerencio uma marca de produtos alimentares portugueses com distribuição recente em Luanda. Gostaria de solicitar o tarifário de spots publicitários de 30s na rádio.",
+      "timestamp": "2026-06-27T10:15:00Z",
+      "isRead": true,
+      "replied": true,
+      "notes": "Respondido com tarifário em PDF e agendado telefonema para dia 2 de Julho."
+    }
+  ],
+  "logs": [
+    {
+      "id": "log1",
+      "timestamp": "2026-06-29T09:30:15Z",
+      "userId": "emp-1",
+      "userEmail": "antonio@trsradioonline.com",
+      "action": "Login efetuado com sucesso",
+      "module": "AUTH",
+      "details": "Sessão administrativa iniciada via navegador Desktop.",
+      "ipAddress": "197.235.122.14"
+    },
+    {
+      "id": "log2",
+      "timestamp": "2026-06-29T11:15:33Z",
+      "userId": "emp-2",
+      "userEmail": "claudia@trsradioonline.com",
+      "action": "Login efetuado com sucesso",
+      "module": "AUTH",
+      "details": "Sessão administrativa iniciada via dispositivo móvel.",
+      "ipAddress": "197.235.101.44"
+    }
+  ],
+  "config": {
+    "radioName": "TRS Rádio Online",
+    "slogan": "A Música Sem Fronteiras",
+    "streamUrl": "https://link.radio.br:17308/stream",
+    "phone": "+244 926 874 444",
+    "whatsappUrl": "https://wa.me/244926874444",
+    "email": "contacto@trsradioonline.com",
+    "address": "Luanda, Angola",
+    "maintenanceMode": false,
+    "googleAppsScriptUrl": "",
+    "googleSpreadsheetId": ""
+  },
+  "songRequests": [
+    {
+      "id": "req1",
+      "sender": "Marcos Almeida",
+      "song": "Te Amo",
+      "artist": "Anselmo Ralph",
+      "message": "Quero mandar esta música para a minha namorada Paula, que está em Benguela nos ouvindo!",
+      "timestamp": "Hoje, 14:32",
+      "likes": 8
+    },
+    {
+      "id": "req2",
+      "sender": "Sílvia Costa",
+      "song": "Lamento Angolano",
+      "artist": "Ruy Mingas",
+      "message": "Esta vai para o meu avô em Luanda, um clássico da nossa terra!",
+      "timestamp": "Hoje, 13:10",
+      "likes": 12
+    },
+    {
+      "id": "req3",
+      "sender": "Carlos Jorge",
+      "song": "Minha Alva",
+      "artist": "Yola Semedo",
+      "message": "Estou sintonizado desde Lisboa, saudades da minha banda!",
+      "timestamp": "Hoje, 11:45",
+      "likes": 5
+    },
+    {
+      "id": "req4",
+      "sender": "Irene de Jesus",
+      "song": "Segredos",
+      "artist": "C4 Pedro",
+      "message": "Melhor rádio! Toca essa para animar o meu trabalho aqui no Kilamba.",
+      "timestamp": "Hoje, 10:15",
+      "likes": 15
+    }
+  ]
+}

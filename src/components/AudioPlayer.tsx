@@ -3,6 +3,7 @@ import { Play, Pause, Volume2, VolumeX, Radio, Music, Clock, Settings, HelpCircl
 import { Show } from '../types';
 import { WEEKDAY_SCHEDULE, SATURDAY_SCHEDULE, SUNDAY_SCHEDULE } from '../data';
 import TRSLogo from './TRSLogo';
+import { TRS_Database_Service } from '../services/db';
 
 // Helper to get current Angola time (UTC+1)
 export function getAngolaTime() {
@@ -102,40 +103,50 @@ export function getCurrentAndNextShow() {
   return { currentShow, nextShow };
 }
 
-export const STREAM_OPTIONS = [
-  {
-    id: 'trs-official',
-    name: 'Canal Oficial TRS (Kizomba/Semba/Kuduro)',
-    url: 'https://link.radio.br:17308/stream',
-    note: 'Transmissão direta de alta fidelidade (Porto 17308). Requer que o navegador ou rede permita conexões a portas personalizadas.',
-    isOfficial: true
-  },
-  {
-    id: 'trs-http-fallback',
-    name: 'Canal Oficial TRS (Transmissão via HTTP)',
-    url: 'http://link.radio.br:17308/stream',
-    note: 'Útil caso o seu navegador ou rede bloqueie a porta com SSL (HTTPS). Pode ser jogado diretamente no seu reprodutor.',
-    isOfficial: true
-  },
-  {
-    id: 'secure-backup',
-    name: 'Servidor Seguro Alternativo (Ritmos Africanos)',
-    url: 'https://stream.zeno.fm/f378v6v27reuv',
-    note: 'Fluxo contínuo via HTTPS standard (Porto 443). Funciona em qualquer navegador, rede corporativa ou iframe.',
-    isOfficial: false
-  },
-  {
-    id: 'test-backup',
-    name: 'Canal de Teste de Áudio & Visualizador (Música do Mundo)',
-    url: 'https://icecast.radiofrance.fr/fip-midfi.mp3',
-    note: 'Fluxo mundial padrão (HTTPS) ideal para testar os efeitos visuais e o equalizador em tempo real.',
-    isOfficial: false
-  }
-];
-
 export default function AudioPlayer() {
+  const [config, setConfig] = useState(() => TRS_Database_Service.getDatabase().config);
   const [activeStreamId, setActiveStreamId] = useState('trs-official');
   const [showTroubleshooter, setShowTroubleshooter] = useState(false);
+
+  useEffect(() => {
+    const updateConfig = () => {
+      setConfig(TRS_Database_Service.getDatabase().config);
+    };
+    return TRS_Database_Service.subscribe(updateConfig);
+  }, []);
+
+  const streamUrl = config.streamUrl || 'https://link.radio.br:17308/stream';
+
+  const STREAM_OPTIONS = [
+    {
+      id: 'trs-official',
+      name: 'Canal Oficial TRS (Kizomba/Semba/Kuduro)',
+      url: streamUrl,
+      note: 'Transmissão direta de alta fidelidade (Porto 17308). Requer que o navegador ou rede permita conexões a portas personalizadas.',
+      isOfficial: true
+    },
+    {
+      id: 'trs-http-fallback',
+      name: 'Canal Oficial TRS (Transmissão via HTTP)',
+      url: streamUrl.replace('https://', 'http://'),
+      note: 'Útil caso o seu navegador ou rede bloqueie a porta com SSL (HTTPS). Pode ser jogado diretamente no seu reprodutor.',
+      isOfficial: true
+    },
+    {
+      id: 'secure-backup',
+      name: 'Servidor Seguro Alternativo (Ritmos Africanos)',
+      url: 'https://stream.zeno.fm/f378v6v27reuv',
+      note: 'Fluxo contínuo via HTTPS standard (Porto 443). Funciona em qualquer navegador, rede corporativa ou iframe.',
+      isOfficial: false
+    },
+    {
+      id: 'test-backup',
+      name: 'Canal de Teste de Áudio & Visualizador (Música do Mundo)',
+      url: 'https://icecast.radiofrance.fr/fip-midfi.mp3',
+      note: 'Fluxo mundial padrão (HTTPS) ideal para testar os efeitos visuais e o equalizador em tempo real.',
+      isOfficial: false
+    }
+  ];
   
   const activeStream = STREAM_OPTIONS.find(s => s.id === activeStreamId)?.url || STREAM_OPTIONS[0].url;
 
@@ -148,6 +159,7 @@ export default function AudioPlayer() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const isStoppingRef = useRef(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const animationRef = useRef<number | null>(null);
   
@@ -167,8 +179,14 @@ export default function AudioPlayer() {
   // Clean up on unmount
   useEffect(() => {
     return () => {
+      isStoppingRef.current = true;
       if (audioRef.current) {
         audioRef.current.pause();
+        try {
+          audioRef.current.src = '';
+        } catch (e) {
+          // ignore
+        }
       }
     };
   }, []);
@@ -178,6 +196,7 @@ export default function AudioPlayer() {
     if (!audioRef.current) return;
     
     if (isPlaying) {
+      isStoppingRef.current = true;
       audioRef.current.pause();
       try {
         // Clear src to stop downloading stream in background
@@ -187,7 +206,11 @@ export default function AudioPlayer() {
       }
       setIsPlaying(false);
       setIsLoading(false);
+      setTimeout(() => {
+        isStoppingRef.current = false;
+      }, 500);
     } else {
+      isStoppingRef.current = false;
       setIsLoading(true);
       setErrorMsg(null);
       try {
@@ -201,7 +224,7 @@ export default function AudioPlayer() {
         setIsPlaying(true);
         setIsLoading(false);
       } catch (err) {
-        console.error('Playback error:', err);
+        console.error('Playback error:', err instanceof Error ? err.message : String(err));
         setIsLoading(false);
         setIsPlaying(false);
         setErrorMsg('Erro de sintonia. O canal oficial pode estar inacessível devido a restrições de porta do seu navegador. Tente selecionar um canal alternativo abaixo.');
@@ -219,17 +242,20 @@ export default function AudioPlayer() {
     
     if (isPlaying && audioRef.current) {
       setIsLoading(true);
+      isStoppingRef.current = true;
       try {
         audioRef.current.pause();
         audioRef.current.src = newUrl;
         audioRef.current.load();
+        isStoppingRef.current = false;
         audioRef.current.volume = isMuted ? 0 : volume;
         const playPromise = audioRef.current.play();
         if (playPromise !== undefined) {
           await playPromise;
         }
       } catch (err) {
-        console.error('Error switching stream:', err);
+        isStoppingRef.current = false;
+        console.error('Error switching stream:', err instanceof Error ? err.message : String(err));
         setIsLoading(false);
         setIsPlaying(false);
         setErrorMsg('Erro ao mudar de canal. O fluxo selecionado pode estar indisponível na sua rede.');
@@ -355,11 +381,20 @@ export default function AudioPlayer() {
         onCanPlay={() => setIsLoading(false)}
         onWaiting={() => setIsLoading(true)}
         onError={(e) => {
+          if (isStoppingRef.current) {
+            return;
+          }
           // If we are not actively playing or buffering, ignore the empty src error from pausing
           if (!isPlaying && !isLoading) {
             return;
           }
-          console.error("Audio element error:", e);
+          
+          const mediaError = audioRef.current?.error;
+          console.error("Audio element error:", {
+            code: mediaError?.code,
+            message: mediaError?.message,
+            type: e.type
+          });
           
           if (activeStreamId === 'trs-official' || activeStreamId === 'trs-http-fallback') {
             console.log("TRS Main Stream failed. Automatically falling back to secure alternative stream...");
@@ -381,7 +416,7 @@ export default function AudioPlayer() {
                     setIsPlaying(true);
                     setIsLoading(false);
                   } catch (retryErr) {
-                    console.error("Fallback stream retry failed:", retryErr);
+                    console.error("Fallback stream retry failed:", retryErr instanceof Error ? retryErr.message : String(retryErr));
                     setIsLoading(false);
                     setIsPlaying(false);
                     setErrorMsg('Canais de transmissão inacessíveis no momento. Por favor, tente selecionar outra opção ou use o link de nova aba.');

@@ -40,6 +40,8 @@ export default function Partnerships() {
       }
     };
     fetchSponsors();
+
+    return TRS_Database_Service.subscribe(fetchSponsors);
   }, []);
 
   const handleSubmit = (e: React.FormEvent) => {

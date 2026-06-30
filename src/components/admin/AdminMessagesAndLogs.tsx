@@ -10,9 +10,10 @@ interface AdminMessagesAndLogsProps {
   employeeEmail: string;
   hasPermission: (module: string, action: 'view' | 'manage') => boolean;
   onRefresh: () => void;
+  showToast?: (message: string, type?: 'success' | 'error' | 'info') => void;
 }
 
-export default function AdminMessagesAndLogs({ db, employeeEmail, hasPermission, onRefresh }: AdminMessagesAndLogsProps) {
+export default function AdminMessagesAndLogs({ db, employeeEmail, hasPermission, onRefresh, showToast }: AdminMessagesAndLogsProps) {
   const [activeSubTab, setActiveSubTab] = useState<'messages' | 'logs'>('messages');
   const [messageSearch, setMessageSearch] = useState('');
   const [logSearch, setLogSearch] = useState('');

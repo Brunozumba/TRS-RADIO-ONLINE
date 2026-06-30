@@ -74,11 +74,14 @@ export default function NewsAndAds() {
                   ctaText: 'Ver Detalhes / Sintonizar',
                   ctaLink: sponsor ? sponsor.website : 'https://trsradioonline.com',
                   gradient: c.priority === 'Alta' ? 'linear-gradient(135deg, #1e1b4b 0%, #311005 100%)' : 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)',
-                  isCampaign: true
+                  isCampaign: true,
+                  classification: c.classification
                 };
               });
             
             setAdsList([...activeCampaigns, ...ADS_DATA].slice(0, 4));
+          } else {
+            setAdsList(ADS_DATA);
           }
         }
       } catch (err) {
@@ -86,6 +89,8 @@ export default function NewsAndAds() {
       }
     };
     fetchDB();
+
+    return TRS_Database_Service.subscribe(fetchDB);
   }, []);
 
   // Tracking Impressions (Views)
@@ -200,7 +205,7 @@ export default function NewsAndAds() {
                 </span>
                 <span className="text-[9px] uppercase tracking-widest text-amber-400 font-mono font-black flex items-center gap-1">
                   <Megaphone className="w-3 h-3 text-red-500 shrink-0" />
-                  Patrocinado
+                  {ad.classification || 'Patrocinado'}
                 </span>
               </div>
               
