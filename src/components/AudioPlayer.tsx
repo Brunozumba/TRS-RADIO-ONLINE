@@ -179,7 +179,12 @@ export default function AudioPlayer() {
     
     if (isPlaying) {
       audioRef.current.pause();
-      audioRef.current.src = '';
+      try {
+        // Clear src to stop downloading stream in background
+        audioRef.current.src = '';
+      } catch (err) {
+        console.warn('Silent src clear error:', err);
+      }
       setIsPlaying(false);
       setIsLoading(false);
     } else {
@@ -194,6 +199,7 @@ export default function AudioPlayer() {
           await playPromise;
         }
         setIsPlaying(true);
+        setIsLoading(false);
       } catch (err) {
         console.error('Playback error:', err);
         setIsLoading(false);
@@ -346,10 +352,13 @@ export default function AudioPlayer() {
       <audio
         ref={audioRef}
         preload="none"
-        crossOrigin="anonymous"
         onCanPlay={() => setIsLoading(false)}
         onWaiting={() => setIsLoading(true)}
         onError={(e) => {
+          // If we are not actively playing or buffering, ignore the empty src error from pausing
+          if (!isPlaying && !isLoading) {
+            return;
+          }
           console.error("Audio element error:", e);
           
           if (activeStreamId === 'trs-official' || activeStreamId === 'trs-http-fallback') {
@@ -360,7 +369,7 @@ export default function AudioPlayer() {
             if (audioRef.current) {
               const backupStream = STREAM_OPTIONS.find(s => s.id === 'secure-backup')?.url || STREAM_OPTIONS[2].url;
               setTimeout(async () => {
-                if (audioRef.current) {
+                if (audioRef.current && (isPlaying || isLoading)) {
                   try {
                     audioRef.current.src = backupStream;
                     audioRef.current.load();
@@ -449,26 +458,47 @@ export default function AudioPlayer() {
           
           {/* Interactive controls bottom row */}
           <div className="flex flex-col sm:flex-row items-center gap-4 justify-between">
-            <div className="flex flex-wrap items-center gap-3">
-              {/* Play Button */}
-              <button
-                id="btn-toggle-play"
-                onClick={togglePlay}
-                disabled={isLoading}
-                className="w-14 h-14 rounded-full bg-gradient-to-r from-amber-500 to-red-600 text-white flex items-center justify-center shadow-lg hover:shadow-amber-500/20 hover:scale-105 active:scale-95 transition-all duration-300 disabled:opacity-50 cursor-pointer"
-                title={isPlaying ? 'Pausar' : 'Ouvir'}
-              >
-                {isLoading ? (
-                  <svg className="animate-spin h-6 w-6 text-white" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                ) : isPlaying ? (
-                  <Pause className="w-6 h-6 fill-white" />
-                ) : (
-                  <Play className="w-6 h-6 fill-white translate-x-0.5" />
-                )}
-              </button>
+            <div className="flex flex-wrap items-center gap-4">
+              {/* Play Button Wrapper with extreme highlight */}
+              <div className="relative flex items-center gap-4">
+                <div className="relative">
+                  {/* Glowing dynamic background rings when not playing */}
+                  {!isPlaying && (
+                    <>
+                      <span className="absolute -inset-2.5 rounded-full bg-amber-500/40 blur animate-ping [animation-duration:2s]" />
+                      <span className="absolute -inset-1.5 rounded-full bg-gradient-to-r from-amber-500 to-red-600 blur opacity-90 animate-pulse" />
+                    </>
+                  )}
+                  <button
+                    id="btn-toggle-play"
+                    onClick={togglePlay}
+                    disabled={isLoading}
+                    className={`relative w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-r from-amber-500 via-amber-600 to-red-600 text-white flex items-center justify-center shadow-2xl hover:shadow-amber-500/50 hover:scale-110 active:scale-95 transition-all duration-300 disabled:opacity-50 cursor-pointer border-2 border-amber-300/40 z-10`}
+                    title={isPlaying ? 'Pausar Rádio' : 'Tocar Rádio'}
+                  >
+                    {isLoading ? (
+                      <svg className="animate-spin h-8 w-8 text-white" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                    ) : isPlaying ? (
+                      <Pause className="w-8 h-8 sm:w-10 sm:h-10 fill-white" />
+                    ) : (
+                      <Play className="w-8 h-8 sm:w-10 sm:h-10 fill-white translate-x-1" />
+                    )}
+                  </button>
+                </div>
+                
+                {/* Highlight Label and URL info */}
+                <div className="flex flex-col justify-center">
+                  <span className={`text-[10px] font-black uppercase tracking-widest ${isPlaying ? 'text-emerald-400' : 'text-amber-500 animate-pulse'}`}>
+                    {isPlaying ? 'A Emitir Em Direto' : 'Rádio Desconectada'}
+                  </span>
+                  <span className="text-white font-extrabold text-sm sm:text-lg leading-tight uppercase tracking-tight">
+                    {isPlaying ? 'TOCANDO AGORA' : 'CLIQUE PARA OUVIR AGORA!'}
+                  </span>
+                </div>
+              </div>
               
               {/* Volume Slider */}
               <div className="flex items-center gap-2 bg-slate-800/50 px-3 py-2 rounded-full border border-slate-700/30">
@@ -597,9 +627,6 @@ export default function AudioPlayer() {
               <li>
                 <strong className="text-slate-300">Interação Obrigatória:</strong> A maioria dos navegadores (como Chrome, Safari e Firefox) impede a reprodução automática de áudio (autoplay) sem que o utilizador clique primeiro no ecrã.
               </li>
-              <li>
-                <strong className="text-slate-300">Compatibilidade Total:</strong> Caso prefira escutar no seu player nativo do computador ou telemóvel (VLC, iTunes, Winamp, etc.), pode utilizar o ficheiro M3U oficial.
-              </li>
             </ul>
 
             <div className="pt-3 border-t border-slate-900 flex flex-wrap items-center justify-between gap-3 text-xs">
@@ -607,30 +634,6 @@ export default function AudioPlayer() {
                 <Activity className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                 Estado da Emissão: <span className="font-bold text-emerald-400">ONLINE</span>
               </span>
-              
-              <div className="flex items-center gap-3">
-                <a
-                  id="btn-external-play-blank"
-                  href="https://link.radio.br:17308/stream"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="px-3 py-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 hover:text-slate-950 rounded-xl flex items-center gap-1.5 transition-all font-extrabold text-[10px] uppercase tracking-wider shadow-md shadow-amber-500/10"
-                >
-                  <ExternalLink className="w-3 h-3" />
-                  Ouvir em Nova Aba
-                </a>
-
-                <a
-                  id="btn-external-pls"
-                  href="https://link.radio.br:17308/stream.m3u"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 rounded-xl flex items-center gap-1.5 transition-all font-bold text-[10px] uppercase tracking-wider"
-                  title="Ficheiro M3U para tocadores externos de multimédia"
-                >
-                  Ficheiro M3U (VLC)
-                </a>
-              </div>
             </div>
           </div>
         </div>
