@@ -34,9 +34,11 @@ export default function NewsAndAds() {
   
   // Local states for view counters
   const [newsViews, setNewsViews] = useState<{ [id: string]: number }>({});
+  const [config, setConfig] = useState(() => TRS_Database_Service.getDatabase().config);
 
   useEffect(() => {
     const fetchDB = async () => {
+      setConfig(TRS_Database_Service.getDatabase().config);
       try {
         const db = await TRS_Database_Service.getDatabase();
         if (db) {
@@ -319,7 +321,7 @@ export default function NewsAndAds() {
           </div>
           <a
             id="btn-ad-footer-whatsapp"
-            href={ABOUT_TEXTS.whatsappUrl}
+            href={config.whatsappUrl || ABOUT_TEXTS.whatsappUrl}
             target="_blank"
             rel="noreferrer"
             className="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-red-600 hover:from-amber-600 hover:to-red-700 text-white font-bold text-xs rounded-xl flex items-center gap-2 transition-all shadow-md"

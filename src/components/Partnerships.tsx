@@ -14,9 +14,11 @@ export default function Partnerships() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [sponsorsList, setSponsorsList] = useState<Sponsor[]>([]);
+  const [config, setConfig] = useState(() => TRS_Database_Service.getDatabase().config);
 
   useEffect(() => {
     const fetchSponsors = async () => {
+      setConfig(TRS_Database_Service.getDatabase().config);
       try {
         const db = await TRS_Database_Service.getDatabase();
         if (db && db.sponsors) {
@@ -152,11 +154,11 @@ export default function Partnerships() {
           <div className="bg-gradient-to-r from-slate-950 to-slate-900 border border-slate-800 p-5 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">Contacto Direto para Negócios</p>
-              <p className="text-white text-lg font-black mt-1">{ABOUT_TEXTS.phone}</p>
-              <p className="text-slate-500 text-xs mt-1">E-mail: {ABOUT_TEXTS.email}</p>
+              <p className="text-white text-lg font-black mt-1">{config.phone || ABOUT_TEXTS.phone}</p>
+              <p className="text-slate-500 text-xs mt-1">E-mail: {config.email || ABOUT_TEXTS.email}</p>
             </div>
             <a 
-              href={ABOUT_TEXTS.whatsappUrl} 
+              href={config.whatsappUrl || ABOUT_TEXTS.whatsappUrl} 
               target="_blank" 
               rel="noreferrer" 
               className="px-5 py-2.5 bg-green-600 hover:bg-green-700 active:bg-green-800 text-white font-bold text-xs rounded-xl flex items-center gap-2 shadow-lg shadow-green-950/20 transition-all cursor-pointer"

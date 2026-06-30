@@ -22,6 +22,17 @@ interface AdminSettingsProps {
 export default function AdminSettings({ db, employeeEmail, hasPermission, onRefresh }: AdminSettingsProps) {
   const [configForm, setConfigForm] = useState<SystemConfig>({ ...db.config });
   const [copied, setCopied] = useState(false);
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
   const [isSaving, setIsSaving] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
@@ -162,31 +173,33 @@ export default function AdminSettings({ db, employeeEmail, hasPermission, onRefr
       return;
     }
 
-    const confirmed = window.confirm(
-      'Tem a certeza que deseja IMPORTAR a grelha de programas a partir do Google Sheets? Isto irá SUBSTITUIR totalmente a programação local atual.'
-    );
-    if (!confirmed) return;
+    setConfirmModal({
+      isOpen: true,
+      title: 'Importar Programação',
+      message: 'Tem a certeza que deseja IMPORTAR a grelha de programas a partir do Google Sheets? Isto irá SUBSTITUIR totalmente a programação local atual.',
+      onConfirm: async () => {
+        setSheetActionStatus('A ler programação do Google Sheets...');
+        setSheetActionError(null);
+        setSheetActionSuccess(null);
 
-    setSheetActionStatus('A ler programação do Google Sheets...');
-    setSheetActionError(null);
-    setSheetActionSuccess(null);
+        try {
+          const importedShows = await GoogleSheetsService.importShowsFromSpreadsheet(targetId);
+          
+          const currentDb = { ...TRS_Database_Service.getDatabase() };
+          currentDb.shows = importedShows;
+          localStorage.setItem('trs_radio_db', JSON.stringify(currentDb));
+          onRefresh();
 
-    try {
-      const importedShows = await GoogleSheetsService.importShowsFromSpreadsheet(targetId);
-      
-      const currentDb = { ...TRS_Database_Service.getDatabase() };
-      currentDb.shows = importedShows;
-      localStorage.setItem('trs_radio_db', JSON.stringify(currentDb));
-      onRefresh();
-
-      setSheetActionSuccess(`Grelha de programas importada com sucesso! (${importedShows.length} programas carregados)`);
-      await TRS_Database_Service.addLog(employeeEmail, 'Importação de programação', 'SETTINGS', `Programação substituída via importação da planilha Google Sheets`);
-    } catch (err: any) {
-      console.error(err);
-      setSheetActionError(err.message || 'Falha ao importar programação do Google Sheets. Verifique se a aba "Programas" existe e contém dados válidos.');
-    } finally {
-      setSheetActionStatus(null);
-    }
+          setSheetActionSuccess(`Grelha de programas importada com sucesso! (${importedShows.length} programas carregados)`);
+          await TRS_Database_Service.addLog(employeeEmail, 'Importação de programação', 'SETTINGS', `Programação substituída via importação da planilha Google Sheets`);
+        } catch (err: any) {
+          console.error(err);
+          setSheetActionError(err.message || 'Falha ao importar programação do Google Sheets. Verifique se a aba "Programas" existe e contém dados válidos.');
+        } finally {
+          setSheetActionStatus(null);
+        }
+      }
+    });
   };
 
   const canManage = hasPermission('settings', 'manage');
@@ -630,6 +643,38 @@ export default function AdminSettings({ db, employeeEmail, hasPermission, onRefr
         </div>
 
       </div>
+
+      {/* Custom Confirmation Modal */}
+      {confirmModal.isOpen && (
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-sm z-[150] flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+            <h3 className="text-lg font-black text-white uppercase tracking-tight flex items-center gap-2">
+              <span className="inline-block w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse" />
+              {confirmModal.title}
+            </h3>
+            <p className="text-slate-300 text-sm mt-3 leading-relaxed">
+              {confirmModal.message}
+            </p>
+            <div className="flex gap-3 mt-6 justify-end">
+              <button
+                onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl text-xs font-bold transition-all cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={async () => {
+                  setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                  await confirmModal.onConfirm();
+                }}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-black uppercase transition-all cursor-pointer shadow-md shadow-red-600/10"
+              >
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

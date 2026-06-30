@@ -14,11 +14,20 @@ import NewsSlider from './components/NewsSlider';
 import TRSLogo from './components/TRSLogo';
 import AdminPanel from './components/admin/AdminPanel';
 import { ABOUT_TEXTS } from './data';
+import { TRS_Database_Service } from './services/db';
 import { Radio, Calendar, Info, Building2, Globe, Phone, Heart, Share2, MessageSquare, Newspaper, Shield } from 'lucide-react';
 
 export default function App() {
   const [viewMode, setViewMode] = useState<'site' | 'admin'>('site');
   const [activeTab, setActiveTab] = useState<'news' | 'requests' | 'schedule' | 'about' | 'advertising'>('news');
+  const [db, setDb] = useState(() => TRS_Database_Service.getDatabase());
+
+  const handleBackToSite = () => {
+    setDb(TRS_Database_Service.getDatabase());
+    setViewMode('site');
+  };
+
+  const config = db.config;
 
   const shareApp = () => {
     if (navigator.share) {
@@ -35,7 +44,7 @@ export default function App() {
   };
 
   if (viewMode === 'admin') {
-    return <AdminPanel onBackToSite={() => setViewMode('site')} />;
+    return <AdminPanel onBackToSite={handleBackToSite} />;
   }
 
   return (
@@ -60,10 +69,10 @@ export default function App() {
             <TRSLogo className="w-11 h-11 filter drop-shadow-[0_2px_8px_rgba(212,175,55,0.2)] hover:scale-105 transition-all duration-300" />
             <div>
               <span className="font-extrabold text-xl tracking-tighter text-white block">
-                TRS<span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-red-500">ONLINE</span>
+                {config.radioName?.substring(0, 3) || 'TRS'}<span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-red-500">{config.radioName?.substring(3) || 'ONLINE'}</span>
               </span>
               <span className="text-[10px] font-medium uppercase tracking-widest text-slate-400 block -mt-1">
-                A Música Sem Fronteiras
+                {config.slogan || ABOUT_TEXTS.slogan}
               </span>
             </div>
           </div>
@@ -77,12 +86,12 @@ export default function App() {
               <div className="text-xs">
                 <p className="text-slate-500 font-semibold uppercase tracking-wider text-[9px] leading-none">Estúdio WhatsApp</p>
                 <a 
-                  href={ABOUT_TEXTS.whatsappUrl} 
+                  href={config.whatsappUrl || ABOUT_TEXTS.whatsappUrl} 
                   target="_blank" 
                   rel="noreferrer" 
                   className="text-white hover:text-green-400 font-bold transition-colors"
                 >
-                  {ABOUT_TEXTS.phone}
+                  {config.phone || ABOUT_TEXTS.phone}
                 </a>
               </div>
             </div>
@@ -110,7 +119,7 @@ export default function App() {
             </button>
             <a
               id="btn-header-whatsapp"
-              href={ABOUT_TEXTS.whatsappUrl}
+              href={config.whatsappUrl || ABOUT_TEXTS.whatsappUrl}
               target="_blank"
               rel="noreferrer"
               className="px-4 py-2 bg-green-600 hover:bg-green-700 active:bg-green-800 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-lg shadow-green-950/20 transition-all"
@@ -226,14 +235,14 @@ export default function App() {
                   <Radio className="w-4 h-4 text-white" />
                 </div>
                 <span className="font-extrabold text-lg text-white">
-                  TRS<span className="text-amber-500">ONLINE</span>
+                  {config.radioName?.substring(0, 3) || 'TRS'}<span className="text-amber-500">{config.radioName?.substring(3) || 'ONLINE'}</span>
                 </span>
               </div>
               <p className="text-slate-400 text-xs leading-relaxed max-w-sm">
-                A TRS Rádio Online é uma estação digital dedicada à promoção da música, cultura e entretenimento, conectando as nossas raízes angolanas com ouvintes espalhados pelos quatro cantos do planeta.
+                A {config.radioName || 'TRS Rádio Online'} é uma estação digital dedicada à promoção da música, cultura e entretenimento, conectando as nossas raízes angolanas com ouvintes espalhados pelos quatro cantos do planeta.
               </p>
               <p className="text-amber-500 font-bold text-xs italic">
-                "{ABOUT_TEXTS.slogan}"
+                "{config.slogan || ABOUT_TEXTS.slogan}"
               </p>
             </div>
 
@@ -275,17 +284,17 @@ export default function App() {
               <ul className="space-y-2.5 text-xs text-slate-400">
                 <li className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                  <a href={ABOUT_TEXTS.whatsappUrl} target="_blank" rel="noreferrer" className="hover:text-white transition-colors">
-                    WhatsApp: {ABOUT_TEXTS.phone}
+                  <a href={config.whatsappUrl || ABOUT_TEXTS.whatsappUrl} target="_blank" rel="noreferrer" className="hover:text-white transition-colors">
+                    WhatsApp: {config.phone || ABOUT_TEXTS.phone}
                   </a>
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                  <span>E-mail: {ABOUT_TEXTS.email}</span>
+                  <span>E-mail: {config.email || ABOUT_TEXTS.email}</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                  <span>Sede: {ABOUT_TEXTS.address}</span>
+                  <span>Sede: {config.address || ABOUT_TEXTS.address}</span>
                 </li>
               </ul>
             </div>
@@ -295,7 +304,7 @@ export default function App() {
           {/* Copyright Row */}
           <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-center">
             <p className="text-[11px] text-slate-500">
-              &copy; {new Date().getFullYear()} TRS Rádio Online. Todos os direitos reservados. De Angola para o mundo.
+              &copy; {new Date().getFullYear()} {config.radioName || 'TRS Rádio Online'}. Todos os direitos reservados. De Angola para o mundo.
             </p>
             
             <div className="flex flex-col sm:flex-row items-center gap-4">

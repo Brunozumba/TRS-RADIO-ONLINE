@@ -52,6 +52,18 @@ export default function AdminContent({ db, employeeEmail, hasPermission, onRefre
     day: 'Segunda a Sexta',
   });
 
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
+
   const canManage = hasPermission(activeSubTab, 'manage');
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, callback: (base64: string) => void) => {
@@ -132,10 +144,15 @@ export default function AdminContent({ db, employeeEmail, hasPermission, onRefre
 
   const handleDeleteNews = async (id: string) => {
     if (!canManage) return;
-    if (confirm('Tem a certeza de que deseja apagar esta notícia permanentemente?')) {
-      await TRS_Database_Service.delete('news', id, employeeEmail);
-      onRefresh();
-    }
+    setConfirmModal({
+      isOpen: true,
+      title: 'Apagar Notícia',
+      message: 'Tem a certeza de que deseja apagar esta notícia permanentemente?',
+      onConfirm: async () => {
+        await TRS_Database_Service.delete('news', id, employeeEmail);
+        onRefresh();
+      }
+    });
   };
 
   // ==========================================
@@ -210,10 +227,15 @@ export default function AdminContent({ db, employeeEmail, hasPermission, onRefre
 
   const handleDeleteShow = async (id: string) => {
     if (!canManage) return;
-    if (confirm('Tem a certeza de que deseja remover este programa da grelha de transmissão?')) {
-      await TRS_Database_Service.delete('shows', id, employeeEmail);
-      onRefresh();
-    }
+    setConfirmModal({
+      isOpen: true,
+      title: 'Remover Programa',
+      message: 'Tem a certeza de que deseja remover este programa da grelha de transmissão?',
+      onConfirm: async () => {
+        await TRS_Database_Service.delete('shows', id, employeeEmail);
+        onRefresh();
+      }
+    });
   };
 
   // Filter lists
@@ -729,6 +751,38 @@ export default function AdminContent({ db, employeeEmail, hasPermission, onRefre
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Confirmation Modal */}
+      {confirmModal.isOpen && (
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-sm z-[150] flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+            <h3 className="text-lg font-black text-white uppercase tracking-tight flex items-center gap-2">
+              <span className="inline-block w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse" />
+              {confirmModal.title}
+            </h3>
+            <p className="text-slate-300 text-sm mt-3 leading-relaxed">
+              {confirmModal.message}
+            </p>
+            <div className="flex gap-3 mt-6 justify-end">
+              <button
+                onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl text-xs font-bold transition-all cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={async () => {
+                  setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                  await confirmModal.onConfirm();
+                }}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-black uppercase transition-all cursor-pointer shadow-md shadow-red-600/10"
+              >
+                Confirmar
+              </button>
+            </div>
           </div>
         </div>
       )}

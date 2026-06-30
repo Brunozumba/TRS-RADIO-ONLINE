@@ -1,8 +1,16 @@
+import { useState, useEffect } from 'react';
 import { ABOUT_TEXTS } from '../data';
+import { TRS_Database_Service } from '../services/db';
 import { Radio, Globe, Compass, Star, Heart, Award, Sparkles, MessageSquare } from 'lucide-react';
 import TRSLogo from './TRSLogo';
 
 export default function AboutUs() {
+  const [config, setConfig] = useState(() => TRS_Database_Service.getDatabase().config);
+
+  useEffect(() => {
+    setConfig(TRS_Database_Service.getDatabase().config);
+  }, []);
+
   // Format the text into paragraphs for cleaner reading
   const paragraphs = ABOUT_TEXTS.whoWeAre.split('\n\n');
 
@@ -19,7 +27,7 @@ export default function AboutUs() {
           Conheça a nossa história
         </span>
         <h2 className="text-2xl lg:text-3xl font-extrabold text-white tracking-tight">
-          Sobre a TRS Rádio Online
+          Sobre a {config.radioName || 'TRS Rádio Online'}
         </h2>
         <p className="text-amber-500 font-semibold text-sm mt-1.5 flex items-center gap-2">
           <span>{ABOUT_TEXTS.subtitle}</span>
@@ -45,7 +53,7 @@ export default function AboutUs() {
             <div className="text-center sm:text-left space-y-1">
               <h4 className="text-white font-extrabold text-base tracking-tight">Símbolo de Qualidade e Identidade</h4>
               <p className="text-slate-400 text-xs leading-relaxed">
-                Este é o emblema oficial da <strong className="text-amber-500">TRS RÁDIO ONLINE</strong>. Representa a harmonia, a modernidade e a conexão sem fronteiras que levamos diariamente aos nossos ouvintes em todos os cantos do planeta.
+                Este é o emblema oficial da <strong className="text-amber-500">{config.radioName || 'TRS RÁDIO ONLINE'}</strong>. Representa a harmonia, a modernidade e a conexão sem fronteiras que levamos diariamente aos nossos ouvintes em todos os cantos do planeta.
               </p>
             </div>
           </div>
@@ -89,7 +97,7 @@ export default function AboutUs() {
               Lema e Essência
             </h4>
             <p className="text-white font-bold text-sm leading-relaxed mb-3">
-              {ABOUT_TEXTS.slogan}
+              {config.slogan || ABOUT_TEXTS.slogan}
             </p>
             <p className="text-slate-400 text-xs leading-relaxed italic">
               {ABOUT_TEXTS.footerNote}
@@ -101,12 +109,12 @@ export default function AboutUs() {
             <MessageSquare className="w-8 h-8 text-green-500 mb-3 animate-bounce" />
             <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Linha Direta WhatsApp</span>
             <a 
-              href={ABOUT_TEXTS.whatsappUrl} 
+              href={config.whatsappUrl || ABOUT_TEXTS.whatsappUrl} 
               target="_blank" 
               rel="noreferrer" 
               className="text-white font-extrabold text-base hover:text-green-400 transition-colors mt-1"
             >
-              {ABOUT_TEXTS.phone}
+              {config.phone || ABOUT_TEXTS.phone}
             </a>
             <span className="text-xs text-slate-400 mt-1">Ligue ou envie sua mensagem para o estúdio!</span>
           </div>
