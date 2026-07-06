@@ -339,7 +339,7 @@ export default function App() {
           </div>
 
           {/* DYNAMIC FEATURED NEWS CAROUSEL (SLIDER DE NOTÍCIAS) */}
-          <NewsSlider />
+          {activeTab === 'news' && <NewsSlider />}
 
           {/* PERSISTENT AUDIO PLAYER */}
           <section aria-label="Rádio Player">
