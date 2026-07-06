@@ -111,6 +111,10 @@ export interface SystemConfig {
   maintenanceMode: boolean;
   googleAppsScriptUrl: string; // The URL to sync with a REAL Google Sheet
   googleSpreadsheetId: string; // The Google Sheets Spreadsheet ID for Direct Sync
+  githubToken?: string;
+  githubRepo?: string;
+  githubBranch?: string;
+  cloudflareWebhookUrl?: string;
 }
 
 export interface AdCampaign {
@@ -584,6 +588,18 @@ export class TRS_Database_Service {
           if (parsedDb.config.googleSpreadsheetId === undefined) {
             parsedDb.config.googleSpreadsheetId = '';
           }
+          if (parsedDb.config.githubToken === undefined) {
+            parsedDb.config.githubToken = '';
+          }
+          if (parsedDb.config.githubRepo === undefined) {
+            parsedDb.config.githubRepo = '';
+          }
+          if (parsedDb.config.githubBranch === undefined) {
+            parsedDb.config.githubBranch = '';
+          }
+          if (parsedDb.config.cloudflareWebhookUrl === undefined) {
+            parsedDb.config.cloudflareWebhookUrl = '';
+          }
         }
 
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(parsedDb));
@@ -988,5 +1004,104 @@ function doPost(e) {
                        .setHeader("Access-Control-Allow-Origin", "*");
 }
 `;
+  }
+
+  /**
+   * Sincroniza a base de dados com o GitHub cometendo o ficheiro database_seed.json,
+   * e opcionalmente dispara um webhook de publicação do Cloudflare.
+   */
+  public static async syncToGithubAndCloudflare(
+    token: string,
+    repo: string, // 'owner/repo'
+    branch: string, // e.g. 'main'
+    cloudflareWebhookUrl?: string
+  ): Promise<{ success: boolean; message: string }> {
+    if (!token || !repo || !branch) {
+      throw new Error('O Token GitHub, Repositório (owner/repo) e Branch são obrigatórios.');
+    }
+
+    // 1. Obter base de dados atualizada
+    const db = this.getDatabase();
+    
+    // Create cloned version without secrets to avoid committing them to GitHub!
+    // This is EXTREMELY important for security.
+    const cleanDb = JSON.parse(JSON.stringify(db)) as TRS_Database;
+    if (cleanDb.config) {
+      cleanDb.config.githubToken = ''; // Hide token in committed repo seed
+    }
+    
+    const contentString = JSON.stringify(cleanDb, null, 2);
+    // Encode properly as UTF-8 Base64
+    const contentBase64 = btoa(encodeURIComponent(contentString).replace(/%([0-9A-F]{2})/g, (match, p1) => {
+      return String.fromCharCode(parseInt(p1, 16));
+    }));
+
+    const filePath = 'src/services/database_seed.json';
+    const url = `https://api.github.com/repos/${repo}/contents/${filePath}`;
+
+    // 2. Procurar se o ficheiro já existe para obter o SHA atual
+    let sha: string | undefined = undefined;
+    try {
+      const fileResponse = await fetch(`${url}?ref=${branch}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `token ${token}`,
+          'Accept': 'application/json'
+        }
+      });
+
+      if (fileResponse.ok) {
+        const fileData = await fileResponse.json();
+        sha = fileData.sha;
+      }
+    } catch (err) {
+      console.warn('Ficheiro database_seed.json não encontrado no GitHub (será criado um novo):', err);
+    }
+
+    // 3. Cometer/Gravar ficheiro no GitHub
+    const bodyPayload: any = {
+      message: `Atualização automática de base de dados [Painel Admin TRS - ${new Date().toLocaleString('pt-PT')}]`,
+      content: contentBase64,
+      branch: branch
+    };
+    if (sha) {
+      bodyPayload.sha = sha;
+    }
+
+    const commitResponse = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `token ${token}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(bodyPayload)
+    });
+
+    if (!commitResponse.ok) {
+      const errorData = await commitResponse.json().catch(() => ({}));
+      throw new Error(errorData.message || `Erro do GitHub API (${commitResponse.status})`);
+    }
+
+    // 4. Opcionalmente disparar Webhook de Build do Cloudflare Pages
+    let webhookTriggered = false;
+    if (cloudflareWebhookUrl && cloudflareWebhookUrl.trim() !== '') {
+      try {
+        await fetch(cloudflareWebhookUrl.trim(), {
+          method: 'POST',
+          mode: 'no-cors'
+        });
+        webhookTriggered = true;
+      } catch (cfErr: any) {
+        console.warn('Erro ao disparar Webhook do Cloudflare:', cfErr);
+      }
+    }
+
+    return {
+      success: true,
+      message: webhookTriggered
+        ? 'Sincronizado com sucesso! Alterações salvas no Git e compilação iniciada no Cloudflare.'
+        : 'Sincronizado com sucesso! Alterações salvas no Git. O Cloudflare irá iniciar a publicação automaticamente.'
+    };
   }
 }

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Settings, Database, Cloud, Copy, Check, Download, Upload, ShieldAlert, 
-  Save, Undo, HelpCircle, ArrowLeftRight, CheckCircle2, Loader2, Sparkles
+  Save, Undo, HelpCircle, ArrowLeftRight, CheckCircle2, Loader2, Sparkles,
+  GitBranch, Github, Globe, RefreshCw
 } from 'lucide-react';
 import { TRS_Database, TRS_Database_Service, SystemConfig } from '../../services/db';
 import { 
@@ -46,6 +47,60 @@ export default function AdminSettings({ db, employeeEmail, hasPermission, onRefr
   const [sheetActionError, setSheetActionError] = useState<string | null>(null);
   const [sheetActionSuccess, setSheetActionSuccess] = useState<string | null>(null);
   const [spreadsheetIdForm, setSpreadsheetIdForm] = useState(db.config.googleSpreadsheetId || '');
+
+  // GitHub & Cloudflare Sync States
+  const [gitSyncing, setGitSyncing] = useState(false);
+  const [gitSyncSuccess, setGitSyncSuccess] = useState<string | null>(null);
+  const [gitSyncError, setGitSyncError] = useState<string | null>(null);
+
+  const handleGitSync = async () => {
+    const token = configForm.githubToken || db.config.githubToken;
+    const repo = configForm.githubRepo || db.config.githubRepo;
+    const branch = configForm.githubBranch || db.config.githubBranch || 'main';
+    const cfWebhook = configForm.cloudflareWebhookUrl || db.config.cloudflareWebhookUrl;
+
+    if (!token || !repo || !branch) {
+      setGitSyncError('Por favor, preencha o Token do GitHub, o Nome do Repositório e o Branch nas configurações abaixo primeiro.');
+      return;
+    }
+
+    setGitSyncing(true);
+    setGitSyncError(null);
+    setGitSyncSuccess(null);
+
+    try {
+      // First save general configuration state
+      await TRS_Database_Service.updateConfig(configForm, employeeEmail);
+      onRefresh();
+
+      const result = await TRS_Database_Service.syncToGithubAndCloudflare(
+        token,
+        repo,
+        branch,
+        cfWebhook
+      );
+
+      setGitSyncSuccess(result.message);
+      if (showToast) {
+        showToast('Sincronização iniciada com sucesso!', 'success');
+      }
+      
+      await TRS_Database_Service.addLog(
+        employeeEmail,
+        'Publicação Git/Cloudflare',
+        'SETTINGS',
+        `Mudanças publicadas com sucesso no repositório GitHub '${repo}' [Branch: ${branch}].`
+      );
+    } catch (err: any) {
+      console.error(err);
+      setGitSyncError(err.message || 'Falha ao sincronizar com GitHub.');
+      if (showToast) {
+        showToast('Erro ao sincronizar com GitHub.', 'error');
+      }
+    } finally {
+      setGitSyncing(false);
+    }
+  };
 
   // Track Auth state on mount
   useEffect(() => {
@@ -639,6 +694,99 @@ export default function AdminSettings({ db, employeeEmail, hasPermission, onRefr
                 {copied ? 'Código Copiado com Sucesso!' : 'Copiar Código Google Apps Script'}
               </button>
             </div>
+          </div>
+
+          {/* Section 3: GitHub & Cloudflare Integration */}
+          <div className="bg-slate-900/50 border border-slate-800/80 p-6 rounded-3xl space-y-4 shadow-xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-amber-500/10 to-transparent rounded-bl-full pointer-events-none" />
+            
+            <h3 className="text-sm font-black uppercase text-white tracking-wider flex items-center gap-2 border-b border-slate-800/85 pb-3">
+              <Github className="w-4 h-4 text-amber-500" />
+              Sincronização GitHub & Cloudflare
+            </h3>
+
+            <p className="text-slate-400 text-[10px] leading-relaxed">
+              Mantenha o seu site de produção do Cloudflare Pages atualizado automaticamente! Sempre que efetuar alterações de dados (notícias, programação, etc.), esta funcionalidade irá gravar um ficheiro de atualização no seu repositório Git e disparar a re-compilação do site.
+            </p>
+
+            <div className="space-y-3.5 pt-1">
+              <div className="space-y-1">
+                <label className="text-[10px] font-black uppercase text-slate-400">GitHub Personal Access Token (PAT)</label>
+                <input
+                  type="password"
+                  value={configForm.githubToken || ''}
+                  onChange={(e) => setConfigForm({ ...configForm, githubToken: e.target.value })}
+                  placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+                  disabled={!canManage}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-amber-500 font-mono text-[10px]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black uppercase text-slate-400">Repositório GitHub</label>
+                  <input
+                    type="text"
+                    value={configForm.githubRepo || ''}
+                    onChange={(e) => setConfigForm({ ...configForm, githubRepo: e.target.value })}
+                    placeholder="ex: utilizador/nome-do-repo"
+                    disabled={!canManage}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-amber-500 font-mono text-[10px]"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black uppercase text-slate-400">Branch do Git</label>
+                  <input
+                    type="text"
+                    value={configForm.githubBranch || ''}
+                    onChange={(e) => setConfigForm({ ...configForm, githubBranch: e.target.value })}
+                    placeholder="ex: main"
+                    disabled={!canManage}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-amber-500 font-mono text-[10px]"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-black uppercase text-slate-400">Cloudflare Deploy Webhook URL</label>
+                <input
+                  type="text"
+                  value={configForm.cloudflareWebhookUrl || ''}
+                  onChange={(e) => setConfigForm({ ...configForm, cloudflareWebhookUrl: e.target.value })}
+                  placeholder="https://api.cloudflare.com/v1/pages/..."
+                  disabled={!canManage}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-amber-500 font-mono text-[10px]"
+                />
+              </div>
+
+              {canManage && (
+                <button
+                  type="button"
+                  onClick={handleGitSync}
+                  disabled={gitSyncing}
+                  className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-md flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+                >
+                  {gitSyncing ? (
+                    <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
+                  ) : (
+                    <RefreshCw className="w-4 h-4 text-slate-950" />
+                  )}
+                  {gitSyncing ? 'A publicar no Git/Cloudflare...' : 'Gravar e Publicar no Cloudflare'}
+                </button>
+              )}
+            </div>
+
+            {gitSyncError && (
+              <p className="text-[10px] text-red-400 font-bold font-mono text-center bg-red-500/10 p-2.5 border border-red-500/20 rounded-xl animate-fadeIn">
+                {gitSyncError}
+              </p>
+            )}
+            {gitSyncSuccess && (
+              <p className="text-[10px] text-emerald-400 font-bold font-mono text-center flex items-center gap-1.5 justify-center bg-emerald-500/10 p-2.5 border border-emerald-500/20 rounded-xl animate-fadeIn animate-pulse">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <span>{gitSyncSuccess}</span>
+              </p>
+            )}
           </div>
 
         </div>

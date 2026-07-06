@@ -15,11 +15,12 @@ import TRSLogo from './components/TRSLogo';
 import AdminPanel from './components/admin/AdminPanel';
 import { ABOUT_TEXTS } from './data';
 import { TRS_Database_Service } from './services/db';
-import { Radio, Calendar, Info, Building2, Globe, Phone, Heart, Share2, MessageSquare, Newspaper, Shield } from 'lucide-react';
+import { Radio, Calendar, Info, Building2, Globe, Phone, Heart, Share2, MessageSquare, Newspaper, Shield, Menu, X } from 'lucide-react';
 
 export default function App() {
   const [viewMode, setViewMode] = useState<'site' | 'admin'>('site');
   const [activeTab, setActiveTab] = useState<'news' | 'requests' | 'schedule' | 'about' | 'advertising'>('news');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [db, setDb] = useState(() => TRS_Database_Service.getDatabase());
 
   useEffect(() => {
@@ -27,6 +28,19 @@ export default function App() {
       setDb(TRS_Database_Service.getDatabase());
     });
   }, []);
+
+  const handleNavigate = (tab: 'news' | 'requests' | 'schedule' | 'about' | 'advertising') => {
+    setActiveTab(tab);
+    setIsMobileMenuOpen(false);
+    
+    // Smooth scroll to content section with fallback
+    setTimeout(() => {
+      const element = document.getElementById('navigation-tabs-section');
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
+  };
 
   const handleBackToSite = () => {
     setDb(TRS_Database_Service.getDatabase());
@@ -83,35 +97,64 @@ export default function App() {
             </div>
           </div>
 
-          {/* Quick Header Contacts (Desktop) */}
-          <div className="hidden md:flex items-center gap-6">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-slate-800/80 flex items-center justify-center text-green-500">
-                <MessageSquare className="w-4 h-4 fill-green-500/10" />
-              </div>
-              <div className="text-xs">
-                <p className="text-slate-500 font-semibold uppercase tracking-wider text-[9px] leading-none">Estúdio WhatsApp</p>
-                <a 
-                  href={config.whatsappUrl || ABOUT_TEXTS.whatsappUrl} 
-                  target="_blank" 
-                  rel="noreferrer" 
-                  className="text-white hover:text-green-400 font-bold transition-colors"
-                >
-                  {config.phone || ABOUT_TEXTS.phone}
-                </a>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-slate-800/80 flex items-center justify-center text-amber-500">
-                <Globe className="w-4 h-4" />
-              </div>
-              <div className="text-xs">
-                <p className="text-slate-500 font-semibold uppercase tracking-wider text-[9px] leading-none">Emissão Principal</p>
-                <p className="text-white font-bold">Luanda, Angola</p>
-              </div>
-            </div>
-          </div>
+          {/* Desktop Header Navigation (Center) */}
+          <nav className="hidden lg:flex items-center gap-1 bg-slate-950/45 p-1.5 rounded-2xl border border-slate-900/80">
+            <button
+              onClick={() => handleNavigate('news')}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
+                activeTab === 'news'
+                  ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-md'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-900/60'
+              }`}
+            >
+              <Newspaper className="w-3.5 h-3.5" />
+              Notícias
+            </button>
+            <button
+              onClick={() => handleNavigate('requests')}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
+                activeTab === 'requests'
+                  ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-md'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-900/60'
+              }`}
+            >
+              <Heart className="w-3.5 h-3.5" />
+              Pedir Música
+            </button>
+            <button
+              onClick={() => handleNavigate('schedule')}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
+                activeTab === 'schedule'
+                  ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-md'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-900/60'
+              }`}
+            >
+              <Calendar className="w-3.5 h-3.5" />
+              Grelha
+            </button>
+            <button
+              onClick={() => handleNavigate('about')}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
+                activeTab === 'about'
+                  ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-md'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-900/60'
+              }`}
+            >
+              <Info className="w-3.5 h-3.5" />
+              Sobre Nós
+            </button>
+            <button
+              onClick={() => handleNavigate('advertising')}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
+                activeTab === 'advertising'
+                  ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-md'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-900/60'
+              }`}
+            >
+              <Building2 className="w-3.5 h-3.5" />
+              Publicidade
+            </button>
+          </nav>
 
           {/* Header Action Buttons */}
           <div className="flex items-center gap-2">
@@ -128,15 +171,102 @@ export default function App() {
               href={config.whatsappUrl || ABOUT_TEXTS.whatsappUrl}
               target="_blank"
               rel="noreferrer"
-              className="px-4 py-2 bg-green-600 hover:bg-green-700 active:bg-green-800 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-lg shadow-green-950/20 transition-all"
+              className="hidden sm:flex px-4 py-2 bg-green-600 hover:bg-green-700 active:bg-green-800 text-white font-bold text-xs rounded-xl items-center gap-1.5 shadow-lg shadow-green-950/20 transition-all"
             >
               <Phone className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">WhatsApp</span>
+              <span>WhatsApp</span>
             </a>
+            
+            {/* Mobile Hamburger Button */}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="lg:hidden p-2.5 rounded-xl bg-slate-800/60 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white transition-all cursor-pointer"
+              title="Menu"
+            >
+              {isMobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+            </button>
           </div>
 
         </div>
       </header>
+
+      {/* MOBILE NAV PANEL (DRAWER) */}
+      {isMobileMenuOpen && (
+        <div className="lg:hidden fixed inset-x-0 top-18 bg-slate-950/98 backdrop-blur-lg border-b border-slate-900/90 z-50 flex flex-col p-6 space-y-6 animate-slideDown shadow-2xl">
+          <div className="flex flex-col gap-2">
+            <p className="text-slate-500 font-black uppercase tracking-widest text-[9px] mb-1">Menu de Páginas</p>
+            <button
+              onClick={() => handleNavigate('news')}
+              className={`p-3.5 rounded-xl text-xs font-black uppercase tracking-wider text-left transition-all flex items-center gap-3 cursor-pointer ${
+                activeTab === 'news'
+                  ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-md'
+                  : 'bg-slate-900/50 border border-slate-900 text-slate-300 hover:text-white'
+              }`}
+            >
+              <Newspaper className="w-4 h-4 shrink-0" />
+              Notícias & Anúncios
+            </button>
+            <button
+              onClick={() => handleNavigate('requests')}
+              className={`p-3.5 rounded-xl text-xs font-black uppercase tracking-wider text-left transition-all flex items-center gap-3 cursor-pointer ${
+                activeTab === 'requests'
+                  ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-md'
+                  : 'bg-slate-900/50 border border-slate-900 text-slate-300 hover:text-white'
+              }`}
+            >
+              <Heart className="w-4 h-4 shrink-0" />
+              Pedir Música & Mensagens
+            </button>
+            <button
+              onClick={() => handleNavigate('schedule')}
+              className={`p-3.5 rounded-xl text-xs font-black uppercase tracking-wider text-left transition-all flex items-center gap-3 cursor-pointer ${
+                activeTab === 'schedule'
+                  ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-md'
+                  : 'bg-slate-900/50 border border-slate-900 text-slate-300 hover:text-white'
+              }`}
+            >
+              <Calendar className="w-4 h-4 shrink-0" />
+              Grelha de Programação
+            </button>
+            <button
+              onClick={() => handleNavigate('about')}
+              className={`p-3.5 rounded-xl text-xs font-black uppercase tracking-wider text-left transition-all flex items-center gap-3 cursor-pointer ${
+                activeTab === 'about'
+                  ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-md'
+                  : 'bg-slate-900/50 border border-slate-900 text-slate-300 hover:text-white'
+              }`}
+            >
+              <Info className="w-4 h-4 shrink-0" />
+              A Nossa História
+            </button>
+            <button
+              onClick={() => handleNavigate('advertising')}
+              className={`p-3.5 rounded-xl text-xs font-black uppercase tracking-wider text-left transition-all flex items-center gap-3 cursor-pointer ${
+                activeTab === 'advertising'
+                  ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-md'
+                  : 'bg-slate-900/50 border border-slate-900 text-slate-300 hover:text-white'
+              }`}
+            >
+              <Building2 className="w-4 h-4 shrink-0" />
+              Publicidade & Parcerias
+            </button>
+          </div>
+
+          <div className="pt-4 border-t border-slate-900/80 flex flex-col gap-3">
+            <p className="text-slate-500 font-black uppercase tracking-widest text-[9px] mb-1">Contactos Rápidos</p>
+            <div className="flex items-center gap-3">
+              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+              <a href={config.whatsappUrl || ABOUT_TEXTS.whatsappUrl} target="_blank" rel="noreferrer" className="text-slate-300 text-xs font-mono font-bold hover:text-green-400 transition-colors">
+                WhatsApp: {config.phone || ABOUT_TEXTS.phone}
+              </a>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="w-2 h-2 rounded-full bg-amber-500" />
+              <span className="text-slate-300 text-xs font-mono">E-mail: {config.email || ABOUT_TEXTS.email}</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* CORE CONTENT */}
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-8">
@@ -147,7 +277,7 @@ export default function App() {
             <div className="flex gap-2 sm:gap-6 min-w-max">
               <button
                 id="nav-tab-news"
-                onClick={() => setActiveTab('news')}
+                onClick={() => handleNavigate('news')}
                 className={`py-3 px-1 border-b-2 font-bold text-sm flex items-center gap-2 transition-all cursor-pointer ${
                   activeTab === 'news'
                     ? 'border-amber-500 text-amber-500'
@@ -159,7 +289,7 @@ export default function App() {
               </button>
               <button
                 id="nav-tab-requests"
-                onClick={() => setActiveTab('requests')}
+                onClick={() => handleNavigate('requests')}
                 className={`py-3 px-1 border-b-2 font-bold text-sm flex items-center gap-2 transition-all cursor-pointer ${
                   activeTab === 'requests'
                     ? 'border-amber-500 text-amber-500'
@@ -171,7 +301,7 @@ export default function App() {
               </button>
               <button
                 id="nav-tab-schedule"
-                onClick={() => setActiveTab('schedule')}
+                onClick={() => handleNavigate('schedule')}
                 className={`py-3 px-1 border-b-2 font-bold text-sm flex items-center gap-2 transition-all cursor-pointer ${
                   activeTab === 'schedule'
                     ? 'border-amber-500 text-amber-500'
@@ -183,7 +313,7 @@ export default function App() {
               </button>
               <button
                 id="nav-tab-about"
-                onClick={() => setActiveTab('about')}
+                onClick={() => handleNavigate('about')}
                 className={`py-3 px-1 border-b-2 font-bold text-sm flex items-center gap-2 transition-all cursor-pointer ${
                   activeTab === 'about'
                     ? 'border-amber-500 text-amber-500'
@@ -195,7 +325,7 @@ export default function App() {
               </button>
               <button
                 id="nav-tab-advertising"
-                onClick={() => setActiveTab('advertising')}
+                onClick={() => handleNavigate('advertising')}
                 className={`py-3 px-1 border-b-2 font-bold text-sm flex items-center gap-2 transition-all cursor-pointer ${
                   activeTab === 'advertising'
                     ? 'border-amber-500 text-amber-500'
