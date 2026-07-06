@@ -603,12 +603,13 @@ export class TRS_Database_Service {
   }
 
   public static getDatabase(): TRS_Database {
-    return this.getDB();
+    return { ...this.getDB() };
   }
 
   private static saveDB(db: TRS_Database) {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(db));
-    this.cachedDb = db;
+    const cloned = { ...db };
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(cloned));
+    this.cachedDb = cloned;
     this.notify();
 
     // Send the update to the local Express backend (writes back to database_seed.json)
@@ -617,7 +618,7 @@ export class TRS_Database_Service {
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(db)
+      body: JSON.stringify(cloned)
     })
       .then(res => {
         if (res.ok) {
@@ -675,7 +676,8 @@ export class TRS_Database_Service {
       row.id = `${table.substring(0, 3)}-${Date.now()}`;
     }
     
-    rows.unshift(row); // Insert at beginning of array for fresh display
+    // Immutable array replacement
+    db[table] = [row, ...rows] as any;
     this.saveDB(db);
 
     // Logging automatically
@@ -718,7 +720,10 @@ export class TRS_Database_Service {
     
     if (index === -1) return false;
     
-    rows[index] = { ...rows[index], ...updatedRow };
+    // Immutable row and array replacement
+    const newRows = [...rows];
+    newRows[index] = { ...newRows[index], ...updatedRow };
+    db[table] = newRows as any;
     this.saveDB(db);
 
     // Logging automatically
@@ -761,7 +766,9 @@ export class TRS_Database_Service {
     if (index === -1) return false;
     
     const deletedItem = rows[index];
-    rows.splice(index, 1);
+    
+    // Immutable array replacement
+    db[table] = rows.filter((_: any, i: number) => i !== index) as any;
     this.saveDB(db);
 
     // Logging automatically
