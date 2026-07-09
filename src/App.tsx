@@ -19,7 +19,7 @@ import { Radio, Calendar, Info, Building2, Globe, Phone, Heart, Share2, MessageS
 
 export default function App() {
   const [viewMode, setViewMode] = useState<'site' | 'admin'>('site');
-  const [activeTab, setActiveTab] = useState<'news' | 'requests' | 'schedule' | 'about' | 'advertising'>('news');
+  const [activeTab, setActiveTab] = useState<'home' | 'news' | 'requests' | 'schedule' | 'about' | 'advertising'>('home');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [db, setDb] = useState(() => TRS_Database_Service.getDatabase());
 
@@ -29,17 +29,14 @@ export default function App() {
     });
   }, []);
 
-  const handleNavigate = (tab: 'news' | 'requests' | 'schedule' | 'about' | 'advertising') => {
+  const handleNavigate = (tab: 'home' | 'news' | 'requests' | 'schedule' | 'about' | 'advertising') => {
     setActiveTab(tab);
     setIsMobileMenuOpen(false);
     
-    // Smooth scroll to content section with fallback
+    // Smooth scroll to top for separate-page experience
     setTimeout(() => {
-      const element = document.getElementById('navigation-tabs-section');
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }, 100);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 50);
   };
 
   const handleBackToSite = () => {
@@ -85,7 +82,8 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between">
           
           {/* Logo Brand */}
-          <div className="flex items-center gap-3">
+          {/* Logo Brand */}
+          <div className="flex items-center gap-3 cursor-pointer select-none" onClick={() => handleNavigate('home')}>
             <TRSLogo className="w-11 h-11 filter drop-shadow-[0_2px_8px_rgba(212,175,55,0.2)] hover:scale-105 transition-all duration-300" />
             <div>
               <span className="font-extrabold text-xl tracking-tighter text-white block">
@@ -99,6 +97,17 @@ export default function App() {
 
           {/* Desktop Header Navigation (Center) */}
           <nav className="hidden lg:flex items-center gap-1 bg-slate-950/45 p-1.5 rounded-2xl border border-slate-900/80">
+            <button
+              onClick={() => handleNavigate('home')}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
+                activeTab === 'home'
+                  ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-md'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-900/60'
+              }`}
+            >
+              <Radio className="w-3.5 h-3.5" />
+              Início
+            </button>
             <button
               onClick={() => handleNavigate('news')}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
@@ -196,6 +205,17 @@ export default function App() {
           <div className="flex flex-col gap-2">
             <p className="text-slate-500 font-black uppercase tracking-widest text-[9px] mb-1">Menu de Páginas</p>
             <button
+              onClick={() => handleNavigate('home')}
+              className={`p-3.5 rounded-xl text-xs font-black uppercase tracking-wider text-left transition-all flex items-center gap-3 cursor-pointer ${
+                activeTab === 'home'
+                  ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-md'
+                  : 'bg-slate-900/50 border border-slate-900 text-slate-300 hover:text-white'
+              }`}
+            >
+              <Radio className="w-4 h-4 shrink-0" />
+              Início / Player
+            </button>
+            <button
               onClick={() => handleNavigate('news')}
               className={`p-3.5 rounded-xl text-xs font-black uppercase tracking-wider text-left transition-all flex items-center gap-3 cursor-pointer ${
                 activeTab === 'news'
@@ -269,92 +289,118 @@ export default function App() {
       )}
 
       {/* CORE CONTENT */}
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-8">
+      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-8 pb-24">
         
-        {/* NAVIGATION TABS SECTION */}
-        <section id="navigation-tabs-section" className="space-y-6">
-          <div className="flex border-b border-slate-900 pb-px overflow-x-auto scrollbar-none">
-            <div className="flex gap-2 sm:gap-6 min-w-max">
-              <button
-                id="nav-tab-news"
-                onClick={() => handleNavigate('news')}
-                className={`py-3 px-1 border-b-2 font-bold text-sm flex items-center gap-2 transition-all cursor-pointer ${
-                  activeTab === 'news'
-                    ? 'border-amber-500 text-amber-500'
-                    : 'border-transparent text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                <Newspaper className="w-4 h-4" />
-                Notícias & Anúncios
-              </button>
-              <button
-                id="nav-tab-requests"
+        {/* HOMEPAGE SPECIFIC LAYOUT */}
+        {activeTab === 'home' && (
+          <div className="space-y-8 animate-fadeIn">
+            {/* Featured Slider */}
+            <NewsSlider />
+          </div>
+        )}
+
+        {/* PERSISTENT AUDIO PLAYER (Reconciled by React gracefully without unmounting the audio stream) */}
+        <AudioPlayer layout={activeTab === 'home' ? 'full' : 'mini'} />
+
+        {/* SEPARATE SUBPAGES SPECIFIC HEADER */}
+        {activeTab !== 'home' && (
+          <div className="mb-8 pb-4 border-b border-slate-900/80 flex items-center gap-3.5 animate-fadeIn">
+            <div className="p-3 bg-gradient-to-br from-amber-500/10 to-red-600/10 rounded-2xl border border-amber-500/15 text-amber-500 shrink-0">
+              {activeTab === 'news' && <Newspaper className="w-5 h-5" />}
+              {activeTab === 'requests' && <Heart className="w-5 h-5" />}
+              {activeTab === 'schedule' && <Calendar className="w-5 h-5" />}
+              {activeTab === 'about' && <Info className="w-5 h-5" />}
+              {activeTab === 'advertising' && <Building2 className="w-5 h-5" />}
+            </div>
+            <div>
+              <h2 className="text-lg sm:text-2xl font-black text-white tracking-tight uppercase">
+                {activeTab === 'news' && 'Notícias & Novidades'}
+                {activeTab === 'requests' && 'Pedir Música'}
+                {activeTab === 'schedule' && 'Grelha de Programas'}
+                {activeTab === 'about' && 'Sobre Nós'}
+                {activeTab === 'advertising' && 'Publicidade & Parcerias'}
+              </h2>
+              <p className="text-[11px] sm:text-xs text-slate-400 font-medium mt-0.5 leading-relaxed">
+                {activeTab === 'news' && 'Acompanhe as últimas notícias e novidades de Angola e do mundo'}
+                {activeTab === 'requests' && 'Envie a sua dedicatória especial e peça a sua música favorita'}
+                {activeTab === 'schedule' && 'Descubra os horários oficiais dos seus programas de rádio favoritos'}
+                {activeTab === 'about' && 'Conheça o percurso, a missão e a equipa da TRS Rádio Online'}
+                {activeTab === 'advertising' && 'Soluções comerciais e parcerias para potenciar a sua marca'}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* ACTIVE CONTENT AREA */}
+        <div className="transition-all duration-300">
+          {activeTab === 'news' && <NewsAndAds />}
+          {activeTab === 'requests' && <SongRequests />}
+          {activeTab === 'schedule' && <Schedule />}
+          {activeTab === 'about' && <AboutUs />}
+          {activeTab === 'advertising' && <Partnerships />}
+        </div>
+
+        {/* HOMEPAGE BENTO DASHBOARD LINKS */}
+        {activeTab === 'home' && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 animate-fadeIn">
+            {/* Box 1: Pedidos de Música */}
+            <div className="bg-slate-900/40 border border-slate-800/80 p-6 rounded-2xl flex flex-col justify-between space-y-4 hover:border-amber-500/20 transition-colors">
+              <div className="space-y-2">
+                <div className="p-3 bg-amber-500/10 text-amber-500 rounded-xl w-fit border border-amber-500/20">
+                  <Heart className="w-5 h-5 shrink-0" />
+                </div>
+                <h3 className="text-white font-extrabold text-base">Peça a sua Música!</h3>
+                <p className="text-slate-400 text-xs leading-relaxed">
+                  Envie a sua dedicatória especial e o seu pedido de música diretamente aos nossos locutores de serviço.
+                </p>
+              </div>
+              <button 
                 onClick={() => handleNavigate('requests')}
-                className={`py-3 px-1 border-b-2 font-bold text-sm flex items-center gap-2 transition-all cursor-pointer ${
-                  activeTab === 'requests'
-                    ? 'border-amber-500 text-amber-500'
-                    : 'border-transparent text-slate-400 hover:text-slate-200'
-                }`}
+                className="w-full py-2.5 bg-slate-850 hover:bg-slate-800 text-white font-bold text-xs rounded-xl border border-slate-800 hover:border-slate-700 transition-all cursor-pointer"
               >
-                <Heart className="w-4 h-4" />
-                Pedir Música & Mensagens
+                Pedir Música Agora
               </button>
-              <button
-                id="nav-tab-schedule"
+            </div>
+
+            {/* Box 2: Programação */}
+            <div className="bg-slate-900/40 border border-slate-800/80 p-6 rounded-2xl flex flex-col justify-between space-y-4 hover:border-amber-500/20 transition-colors">
+              <div className="space-y-2">
+                <div className="p-3 bg-amber-500/10 text-amber-500 rounded-xl w-fit border border-amber-500/20">
+                  <Calendar className="w-5 h-5 shrink-0" />
+                </div>
+                <h3 className="text-white font-extrabold text-base">Grelha Semanal</h3>
+                <p className="text-slate-400 text-xs leading-relaxed">
+                  Confira os horários de cada programa e saiba quando sintonizar o seu apresentador preferido.
+                </p>
+              </div>
+              <button 
                 onClick={() => handleNavigate('schedule')}
-                className={`py-3 px-1 border-b-2 font-bold text-sm flex items-center gap-2 transition-all cursor-pointer ${
-                  activeTab === 'schedule'
-                    ? 'border-amber-500 text-amber-500'
-                    : 'border-transparent text-slate-400 hover:text-slate-200'
-                }`}
+                className="w-full py-2.5 bg-slate-850 hover:bg-slate-800 text-white font-bold text-xs rounded-xl border border-slate-800 hover:border-slate-700 transition-all cursor-pointer"
               >
-                <Calendar className="w-4 h-4" />
-                Grelha de Programação
+                Ver Programação Completa
               </button>
-              <button
-                id="nav-tab-about"
-                onClick={() => handleNavigate('about')}
-                className={`py-3 px-1 border-b-2 font-bold text-sm flex items-center gap-2 transition-all cursor-pointer ${
-                  activeTab === 'about'
-                    ? 'border-amber-500 text-amber-500'
-                    : 'border-transparent text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                <Info className="w-4 h-4" />
-                A Nossa História
-              </button>
-              <button
-                id="nav-tab-advertising"
+            </div>
+
+            {/* Box 3: Publicidade */}
+            <div className="bg-slate-900/40 border border-slate-800/80 p-6 rounded-2xl flex flex-col justify-between space-y-4 hover:border-amber-500/20 transition-colors">
+              <div className="space-y-2">
+                <div className="p-3 bg-amber-500/10 text-amber-500 rounded-xl w-fit border border-amber-500/20">
+                  <Building2 className="w-5 h-5 shrink-0" />
+                </div>
+                <h3 className="text-white font-extrabold text-base">Divulgue Connosco</h3>
+                <p className="text-slate-400 text-xs leading-relaxed">
+                  Alcance milhares de ouvintes em Angola e no mundo. Conheça as nossas soluções comerciais e campanhas.
+                </p>
+              </div>
+              <button 
                 onClick={() => handleNavigate('advertising')}
-                className={`py-3 px-1 border-b-2 font-bold text-sm flex items-center gap-2 transition-all cursor-pointer ${
-                  activeTab === 'advertising'
-                    ? 'border-amber-500 text-amber-500'
-                    : 'border-transparent text-slate-400 hover:text-slate-200'
-                }`}
+                className="w-full py-2.5 bg-slate-850 hover:bg-slate-800 text-white font-bold text-xs rounded-xl border border-slate-800 hover:border-slate-700 transition-all cursor-pointer"
               >
-                <Building2 className="w-4 h-4" />
-                Publicidade & Parcerias
+                Anunciar na Rádio
               </button>
             </div>
           </div>
-
-          {/* DYNAMIC FEATURED NEWS CAROUSEL (SLIDER DE NOTÍCIAS) */}
-          {activeTab === 'news' && <NewsSlider />}
-
-          {/* PERSISTENT AUDIO PLAYER */}
-          <section aria-label="Rádio Player">
-            <AudioPlayer />
-          </section>
-
-          {/* ACTIVE TAB RENDERER */}
-          <div className="transition-all duration-300">
-            {activeTab === 'news' && <NewsAndAds />}
-            {activeTab === 'requests' && <SongRequests />}
-            {activeTab === 'schedule' && <Schedule />}
-            {activeTab === 'about' && <AboutUs />}
-            {activeTab === 'advertising' && <Partnerships />}
-          </div>
-        </section>
+        )}
 
       </main>
 
